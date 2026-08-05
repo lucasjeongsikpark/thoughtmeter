@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-and-build:
+    # arm64 runner to match the supported platform (Apple Silicon only).
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain info
+        run: |
+          sw_vers
+          swift --version
+          node --version
+
+      - name: Tests (Swift + extension)
+        run: make test
+
+      - name: Privacy source scan
+        run: make privacy-check
+
+      - name: Release build + bundle
+        run: make build
+
+      - name: Package artifacts
+        run: scripts/package.sh
+
+      - name: Verify bundle (structure, arch, signature, privacy, network)
+        run: make verify
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: thoughtmeter-dist
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/SHA256SUMS.txt
+            dist/thoughtmeter.rb
+          retention-days: 14
