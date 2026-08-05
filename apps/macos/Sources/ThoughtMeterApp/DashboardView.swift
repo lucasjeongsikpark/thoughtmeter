@@ -98,8 +98,16 @@ struct DashboardView: View {
             }
             .help("Refresh")
 
-            Button("Share…") { shareSheetShown = true }
+            Button("Proof of Thought") { shareSheetShown = true }
                 .disabled(stats.isEmpty)
+                .help("Export today's trace as an image")
+
+            Button {
+                SettingsOpener.open()
+            } label: {
+                Image(systemName: "gearshape")
+            }
+            .help("Settings")
         }
     }
 

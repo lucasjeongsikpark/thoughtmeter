@@ -1,6 +1,17 @@
 import AppKit
 import SwiftUI
 
+/// Opens the app's Settings scene from contexts outside the MenuBarExtra
+/// environment (e.g. the dashboard's NSWindow, where the SwiftUI
+/// `openSettings` action is unavailable).
+@MainActor
+enum SettingsOpener {
+    static func open() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+    }
+}
+
 /// Opens the dashboard and onboarding as plain NSWindows.
 ///
 /// ThoughtMeter is an LSUIElement (agent) app: SwiftUI WindowGroup scenes are

@@ -30,4 +30,12 @@ let catalogTests: [TC] = [
         let names = RecognizedCatalog.apps.map { $0.displayName }
         t.expectEqual(Set(names).count, names.count)
     },
+    TC("domain companion map points at recognized entries") { t in
+        let domains = Set(RecognizedCatalog.domains.map { $0.domain })
+        let appIDs = Set(RecognizedCatalog.apps.map { $0.bundleID })
+        for (domain, bundleID) in RecognizedCatalog.domainCompanionApps {
+            t.expect(domains.contains(domain), "companion key '\(domain)' is not a recognized domain")
+            t.expect(appIDs.contains(bundleID), "companion value '\(bundleID)' is not a recognized app")
+        }
+    },
 ]

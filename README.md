@@ -17,7 +17,7 @@ It is a lightweight, local-first macOS menu bar app that counts keystrokes insid
 - Counts keyboard presses **only** while an app or website you selected is frontmost — ChatGPT, Claude, VS Code, Cursor, Terminal, or `chatgpt.com` / `claude.ai` in Chrome.
 - Shows a calm, native dashboard: today's Human Input, hourly activity, per-tool breakdown, and 7/30-day trends.
 - Lives in the menu bar with an optional live count (`12.4K`).
-- Exports your data to CSV, renders a local share card, and deletes everything on request.
+- Exports your data to CSV, renders a local **Proof of Thought** card, and deletes everything on request.
 - Stores everything in one local SQLite file. **The app makes zero network requests** — no account, no telemetry, no update checks. There is even a script in this repo that verifies the binary contains no networking code.
 
 ## What "Human Input" means
@@ -75,7 +75,7 @@ The one-paragraph version: ThoughtMeter stores **minute-level aggregate counts p
 
 - **Today** — summary cards (total, vs 7-day average, top source, peak hour), hourly chart, per-source bars, 7-day trend
 - **7 Days / 30 Days** — daily totals and per-source breakdown
-- **Share card** — a 1200×630 PNG rendered locally and saved wherever you choose
+- **Proof of Thought** — today's trace as a 1200×630 PNG, rendered locally and saved wherever you choose
 
 ## Updating
 

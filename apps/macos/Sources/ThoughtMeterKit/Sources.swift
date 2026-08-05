@@ -66,6 +66,7 @@ public enum RecognizedCatalog {
         App(displayName: "Claude", bundleID: "com.anthropic.claudefordesktop"),
         App(displayName: "Perplexity", bundleID: "ai.perplexity.mac"),
         App(displayName: "Microsoft Copilot", bundleID: "com.microsoft.Copilot"),
+        App(displayName: "Grok", bundleID: "ai.x.grok"),
         App(displayName: "Raycast", bundleID: "com.raycast.macos"),
         // Local model runners
         App(displayName: "LM Studio", bundleID: "ai.elementlabs.lmstudio"),
@@ -121,6 +122,18 @@ public enum RecognizedCatalog {
         ("Bolt", "bolt.new"),
         ("Replit", "replit.com"),
         ("Midjourney", "midjourney.com"),
+    ]
+
+    /// Domain → desktop-app sibling. Used only for UI: when the companion
+    /// app is installed, its icon identifies the domain (ThoughtMeter never
+    /// fetches favicons — the app makes no network requests — and bundling
+    /// third-party logos would be a trademark problem for an OSS repo).
+    public static let domainCompanionApps: [String: String] = [
+        "chatgpt.com": "com.openai.chat",
+        "claude.ai": "com.anthropic.claudefordesktop",
+        "perplexity.ai": "ai.perplexity.mac",
+        "copilot.microsoft.com": "com.microsoft.Copilot",
+        "grok.com": "ai.x.grok",
     ]
 
     /// Chrome variants. These are handled exclusively through domain tracking;

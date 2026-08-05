@@ -2,8 +2,9 @@ import AppKit
 import SwiftUI
 import ThoughtMeterKit
 
-/// User-initiated share card export: renders a 1200×630 PNG locally and saves
-/// it through a standard Save dialog. Nothing is uploaded anywhere.
+/// "Proof of Thought" — user-initiated card export: renders a 1200×630 PNG
+/// locally and saves it through a standard Save dialog. Nothing is uploaded
+/// anywhere.
 struct ShareCardSheet: View {
     @EnvironmentObject private var coordinator: AppCoordinator
     @Environment(\.dismiss) private var dismiss
@@ -12,8 +13,11 @@ struct ShareCardSheet: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            Text("Share today’s Human Input")
+            Text("Proof of Thought")
                 .font(.headline)
+            Text("Today’s trace, rendered locally as a 1200×630 image.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
 
             ShareCardView(stats: stats, includeSources: includeSources)
                 .frame(width: 480, height: 252)
@@ -44,8 +48,8 @@ struct ShareCardSheet: View {
         else { return }
 
         let panel = NSSavePanel()
-        panel.nameFieldStringValue = "human-input.png"
-        panel.title = "Save share card"
+        panel.nameFieldStringValue = "proof-of-thought.png"
+        panel.title = "Save Proof of Thought"
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url else { return }
         try? png.write(to: url)
