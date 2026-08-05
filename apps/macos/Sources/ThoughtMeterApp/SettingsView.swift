@@ -66,7 +66,7 @@ private struct AppearanceSettings: View {
         Form {
             Picker("Menu bar shows", selection: Binding(
                 get: { coordinator.settings.menuBarDisplay },
-                set: { coordinator.settings.menuBarDisplay = $0; coordinator.objectWillChange.send() }
+                set: { coordinator.setMenuBarDisplay($0) }
             )) {
                 ForEach(MenuBarDisplay.allCases, id: \.self) { display in
                     Text(display.displayName).tag(display)

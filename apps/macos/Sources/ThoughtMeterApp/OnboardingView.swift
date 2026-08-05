@@ -190,12 +190,12 @@ struct SourceChecklist: View {
             List {
                 Section("Applications") {
                     ForEach(coordinator.sources.filter { $0.kind == .app }) { source in
-                        sourceRow(source, icon: InstalledApps.icon(forBundleID: source.identifier))
+                        sourceRow(source)
                     }
                 }
                 Section("Chrome domains") {
                     ForEach(coordinator.sources.filter { $0.kind == .domain }) { source in
-                        sourceRow(source, icon: nil)
+                        sourceRow(source)
                     }
                 }
             }
@@ -219,17 +219,9 @@ struct SourceChecklist: View {
         }
     }
 
-    private func sourceRow(_ source: SourceRecord, icon: NSImage?) -> some View {
+    private func sourceRow(_ source: SourceRecord) -> some View {
         HStack(spacing: 8) {
-            if let icon {
-                Image(nsImage: icon)
-                    .resizable()
-                    .frame(width: 18, height: 18)
-            } else if source.kind == .domain {
-                Image(systemName: "globe")
-                    .frame(width: 18, height: 18)
-                    .foregroundStyle(.secondary)
-            }
+            SourceIcon(source: source, size: 18)
             Toggle(isOn: Binding(
                 get: { source.isEnabled },
                 set: { coordinator.setSourceEnabled(source.id, enabled: $0) }

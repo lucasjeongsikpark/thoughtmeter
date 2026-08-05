@@ -108,11 +108,6 @@ enum InstalledApps {
                         appURL: url)
     }
 
-    static func icon(forBundleID bundleID: String) -> NSImage? {
-        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return nil }
-        return NSWorkspace.shared.icon(forFile: url.path)
-    }
-
     private static func displayName(of bundle: Bundle, fallback: String) -> String {
         (bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
             ?? (bundle.object(forInfoDictionaryKey: "CFBundleName") as? String)

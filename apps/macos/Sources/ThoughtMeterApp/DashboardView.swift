@@ -214,28 +214,49 @@ struct DashboardView: View {
         }
     }
 
+    /// Row list instead of a bare chart: the app icon carries identity at a
+    /// glance, the label names it, the thin bar carries magnitude, and the
+    /// exact count is direct-labeled. One hue throughout.
     private var sourceBreakdown: some View {
         ChartCard(title: "By source") {
             let entries = Array(stats.bySource.prefix(8))
-            Chart(entries, id: \.source.id) { entry in
-                BarMark(
-                    x: .value("Keystrokes", entry.keystrokes),
-                    y: .value("Source", entry.source.displayName),
-                    height: .ratio(0.6)
-                )
-                .foregroundStyle(barStyle)
-                .cornerRadius(3)
-                .annotation(position: .trailing, alignment: .leading, spacing: 6) {
-                    Text(HumanInputFormatter.compact(entry.keystrokes))
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
+            let maxCount = entries.first?.keystrokes ?? 1
+            VStack(spacing: 10) {
+                ForEach(entries, id: \.source.id) { entry in
+                    HStack(spacing: 10) {
+                        SourceIcon(source: entry.source, size: 18)
+                        Text(entry.source.displayName)
+                            .font(.callout)
+                            .lineLimit(1)
+                            .frame(width: 170, alignment: .leading)
+                        GeometryReader { proxy in
+                            ZStack(alignment: .leading) {
+                                Capsule()
+                                    .fill(.quaternary.opacity(0.5))
+                                Capsule()
+                                    .fill(barStyle)
+                                    .frame(width: max(4, proxy.size.width * CGFloat(entry.keystrokes) / CGFloat(max(maxCount, 1))))
+                            }
+                        }
+                        .frame(height: 7)
+                        Text(HumanInputFormatter.exact(entry.keystrokes))
+                            .font(.callout.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .frame(width: 76, alignment: .trailing)
+                    }
+                }
+                if stats.bySource.count > entries.count {
+                    let remaining = stats.bySource.dropFirst(entries.count)
+                    HStack {
+                        Text("+ \(remaining.count) more")
+                        Spacer()
+                        Text(HumanInputFormatter.exact(remaining.reduce(0) { $0 + $1.keystrokes }))
+                            .monospacedDigit()
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
                 }
             }
-            .chartXAxis(.hidden)
-            .chartYAxis {
-                AxisMarks { _ in AxisValueLabel() }
-            }
-            .frame(height: CGFloat(entries.count) * 34 + 16)
         }
     }
 

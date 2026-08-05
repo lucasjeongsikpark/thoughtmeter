@@ -41,6 +41,11 @@ final class AppCoordinator: ObservableObject {
     @Published private(set) var permissionGranted = false
     @Published var startupError: String?
 
+    /// Set by PopoverView while open. Together with the menu bar count
+    /// setting, this gates the periodic stats queries: when nothing on
+    /// screen shows counts, the 30-second tick skips SQLite entirely.
+    var popoverVisible = false
+
     var isPaused: Bool { pauseState != .active }
 
     /// True when at least one enabled domain source exists — only then is a
@@ -161,8 +166,19 @@ final class AppCoordinator: ObservableObject {
         flushQuietly()
         applyPauseState()
         recomputeActiveSource() // Chrome freshness can expire without an event
-        refreshStats()
         refreshChromeStatus()
+        // Query the database only when something visible shows counts:
+        // the menu bar count or an open popover. The dashboard queries the
+        // store itself on open/refresh.
+        let menuBarShowsCount: Bool = {
+            switch settings.menuBarDisplay {
+            case .iconCompactCount, .iconRawCount: return true
+            case .iconOnly, .iconHiddenCount: return false
+            }
+        }()
+        if menuBarShowsCount || popoverVisible {
+            refreshStats()
+        }
     }
 
     private func startEventTap() {
@@ -342,8 +358,19 @@ final class AppCoordinator: ObservableObject {
             }
             bySource.sort { $0.keystrokes > $1.keystrokes }
         }
-        todayTotal = dbTotal + pending.values.reduce(0, +)
-        todayBySource = bySource
+        // Publish only real changes — every @Published write re-renders the
+        // menu bar label and popover.
+        let newTotal = dbTotal + pending.values.reduce(0, +)
+        if todayTotal != newTotal { todayTotal = newTotal }
+        let unchanged = todayBySource.count == bySource.count
+            && zip(todayBySource, bySource).allSatisfy { $0.source == $1.source && $0.keystrokes == $1.keystrokes }
+        if !unchanged { todayBySource = bySource }
+    }
+
+    func setMenuBarDisplay(_ display: MenuBarDisplay) {
+        settings.menuBarDisplay = display
+        refreshStats() // count may have been stale while hidden
+        objectWillChange.send()
     }
 
     /// Public refresh for views appearing (popover open, dashboard open).

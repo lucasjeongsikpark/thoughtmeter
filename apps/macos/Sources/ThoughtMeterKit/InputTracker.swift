@@ -27,7 +27,9 @@ public final class InputTracker {
     private let now: () -> Int64
 
     /// - Parameter clock: injectable unix-seconds clock for tests.
-    public init(clock: @escaping () -> Int64 = { Int64(Date().timeIntervalSince1970) }) {
+    ///   The default uses time(2) — integer seconds with no Date/Double
+    ///   round-trip, since this runs once per keystroke.
+    public init(clock: @escaping () -> Int64 = { Int64(time(nil)) }) {
         self.now = clock
     }
 

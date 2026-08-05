@@ -23,9 +23,10 @@ struct PopoverView: View {
             }
 
             if !topThree.isEmpty {
-                VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 6) {
                     ForEach(topThree, id: \.source.id) { entry in
-                        HStack {
+                        HStack(spacing: 7) {
+                            SourceIcon(source: entry.source, size: 15)
                             Text(entry.source.displayName)
                                 .lineLimit(1)
                             Spacer()
@@ -80,7 +81,11 @@ struct PopoverView: View {
         }
         .padding(14)
         .frame(width: 280)
-        .onAppear { coordinator.refreshNow() }
+        .onAppear {
+            coordinator.popoverVisible = true
+            coordinator.refreshNow()
+        }
+        .onDisappear { coordinator.popoverVisible = false }
     }
 
     private var topThree: [(source: SourceRecord, keystrokes: Int)] {

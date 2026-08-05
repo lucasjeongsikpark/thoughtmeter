@@ -11,10 +11,18 @@ First public release.
 - macOS menu bar app (Apple Silicon, macOS 14+) counting keyboard-down events
   inside user-selected AI tools and workspaces — the **Human Input** metric.
 - Two tracking modes: *Selected tools only* (default) and *All recognized AI tools*.
-- Recognized apps: ChatGPT, Claude, VS Code, Cursor, Terminal, iTerm2, Warp,
-  Zed, Windsurf (verified against installed bundles); custom apps and domains.
-- Chrome domain tracking (`chatgpt.com`, `claude.ai`, custom) via a Manifest V3
-  extension + local Native Messaging host. Hostname-only; fail-closed staleness.
+- Recognized catalog (verified against installed bundles at runtime):
+  AI apps (ChatGPT, Claude, Perplexity, Microsoft Copilot, Raycast, LM Studio,
+  Ollama, Jan), AI-assisted editors (VS Code family, Cursor, Windsurf, Zed,
+  Trae, Xcode, IntelliJ IDEA, PyCharm, WebStorm), and terminals (Terminal,
+  iTerm2, Warp, Ghostty, Alacritty, kitty, WezTerm); custom apps and domains.
+- Chrome domain tracking via a Manifest V3 extension + local Native Messaging
+  host, with 22 recognized AI domains (ChatGPT, Claude, Gemini, Perplexity,
+  Copilot, Grok, DeepSeek, Le Chat, Poe, Character.AI, Meta AI, Qwen, Kimi,
+  Wrtn, CLOVA X, v0, Lovable, Bolt, Replit, Midjourney, AI Studio, NotebookLM)
+  plus custom domains. Hostname-only; fail-closed staleness.
+- Source icons throughout (popover, dashboard, settings) and an icon +
+  labeled-bar source breakdown on the dashboard.
 - Dashboard: Today / 7 Days / 30 Days, hourly chart, per-source breakdown,
   7-day trend, empty states.
 - Menu bar popover with live count, top-3 sources, pause controls
