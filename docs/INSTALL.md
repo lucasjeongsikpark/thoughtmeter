@@ -27,10 +27,14 @@ Then start ThoughtMeter from Applications and jump to
 
 1. Download `ThoughtMeter-x.y.z.dmg` from the
    [releases page](https://github.com/lucasjeongsikpark/thoughtmeter/releases).
-2. (Optional, recommended) Verify the checksum:
+2. (Optional, recommended) Download `SHA256SUMS.txt` from the same release
+   and verify the checksum:
    ```bash
-   shasum -a 256 -c SHA256SUMS.txt
+   shasum -a 256 --ignore-missing -c SHA256SUMS.txt
    ```
+   (`--ignore-missing` skips listed files you did not download — without it
+   the command fails because the checksum file also lists the other release
+   artifacts.)
 3. Open the DMG and drag **ThoughtMeter** into **Applications**.
 
 ## First launch

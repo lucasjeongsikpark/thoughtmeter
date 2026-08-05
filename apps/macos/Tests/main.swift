@@ -7,6 +7,7 @@ let exitCode = runSuites([
     ("KeystrokeCounter", keystrokeCounterTests),
     ("InputTracker", inputTrackerTests),
     ("DomainNormalizer", domainTests),
+    ("ChromeExtensionID", extensionIDTests),
     ("RecognizedCatalog", catalogTests),
     ("ChromeDomainState", chromeStateTests),
     ("SourceResolver", resolverTests),

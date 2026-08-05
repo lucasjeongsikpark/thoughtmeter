@@ -158,7 +158,7 @@ private struct ChromeSettings: View {
                     TextField("Extension ID from chrome://extensions", text: $devExtensionID)
                         .onSubmit { saveDevID() }
                     Button("Save ID & Register") { saveDevID() }
-                        .disabled(devExtensionID.trimmingCharacters(in: .whitespaces).isEmpty
+                        .disabled(devExtensionID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                                   && ReleaseConfig.productionExtensionID == nil)
                 }
                 Text("Once ThoughtMeter Connector is on the Chrome Web Store, installing it from there needs no ID — release builds know the store extension automatically.")
@@ -227,7 +227,14 @@ private struct ChromeSettings: View {
     }
 
     private func saveDevID() {
-        let trimmed = devExtensionID.trimmingCharacters(in: .whitespaces)
+        // Newlines matter here: text pasted from chrome://extensions often
+        // carries a trailing one, and Chrome rejects the whole manifest over
+        // a single malformed allowed_origins entry.
+        let trimmed = devExtensionID.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty && !ChromeExtensionID.isPlausible(trimmed) {
+            statusMessage = "That doesn't look like a Chrome extension ID — expected 32 letters (a–p), as shown on the ThoughtMeter Connector card at chrome://extensions. Nothing was changed."
+            return
+        }
         ReleaseConfig.developmentExtensionID = trimmed.isEmpty ? nil : trimmed
         runInstall()
     }

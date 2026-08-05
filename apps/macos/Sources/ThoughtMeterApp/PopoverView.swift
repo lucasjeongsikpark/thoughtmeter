@@ -48,7 +48,14 @@ struct PopoverView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 statusRow
-                if !coordinator.trackingHealthy {
+                if let startupError = coordinator.startupError {
+                    // Without the database nothing persists — say so instead of
+                    // hinting at Input Monitoring, which is not the problem.
+                    Text(startupError)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                } else if !coordinator.trackingHealthy {
                     Button("Open Input Monitoring Settings") {
                         coordinator.permission.request()
                         PermissionMonitor.openSystemSettings()
@@ -109,7 +116,9 @@ struct PopoverView: View {
     private var statusRow: some View {
         HStack(spacing: 5) {
             Text("Tracking:").foregroundStyle(.secondary)
-            if !coordinator.permissionGranted {
+            if coordinator.startupError != nil {
+                Text("Stopped — local database unavailable").foregroundStyle(.red)
+            } else if !coordinator.permissionGranted {
                 Text("Input Monitoring needed").foregroundStyle(.orange)
             } else if !coordinator.tapRunning {
                 Text("Input Monitoring lost — re-grant needed").foregroundStyle(.orange)

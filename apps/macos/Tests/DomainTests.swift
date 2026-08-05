@@ -53,6 +53,26 @@ let domainTests: [TC] = [
     },
 ]
 
+let extensionIDTests: [TC] = [
+    TC("accepts real extension IDs (32 letters a–p)") { t in
+        t.expect(ChromeExtensionID.isPlausible("omhnbpfiapchifodmobgeglhgpgolmhn"), "the store ID is valid")
+        t.expect(ChromeExtensionID.isPlausible(String(repeating: "a", count: 32)))
+        t.expect(ChromeExtensionID.isPlausible(String(repeating: "p", count: 32)))
+    },
+    TC("rejects wrong lengths") { t in
+        t.expect(!ChromeExtensionID.isPlausible(""))
+        t.expect(!ChromeExtensionID.isPlausible(String(repeating: "a", count: 31)))
+        t.expect(!ChromeExtensionID.isPlausible(String(repeating: "a", count: 33)))
+    },
+    TC("rejects characters outside a–p") { t in
+        t.expect(!ChromeExtensionID.isPlausible(String(repeating: "q", count: 32)), "q is past the alphabet")
+        t.expect(!ChromeExtensionID.isPlausible(String(repeating: "A", count: 32)), "uppercase rejected")
+        t.expect(!ChromeExtensionID.isPlausible(String(repeating: "1", count: 32)), "digits rejected")
+        t.expect(!ChromeExtensionID.isPlausible("abcdefgh ijklmnopabcdefghijklmno"), "embedded space rejected (32 chars)")
+        t.expect(!ChromeExtensionID.isPlausible("chrome-extension://omhnbpfiapchif"), "pasted URL fragment rejected")
+    },
+]
+
 let chromeStateTests: [TC] = [
     TC("fresh state within window") { t in
         let state = ChromeDomainState(trackedDomain: "claude.ai", updatedAt: 1_000_000)

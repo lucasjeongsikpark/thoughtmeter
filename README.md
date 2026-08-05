@@ -56,7 +56,7 @@ Homebrew 6.0+ refuses casks from third-party taps until you trust them. If you s
 
 ### Direct download
 
-1. Download `ThoughtMeter-x.y.z.dmg` from [Releases](../../releases), and optionally verify it against `SHA256SUMS.txt` (`shasum -a 256 -c SHA256SUMS.txt`).
+1. Download `ThoughtMeter-x.y.z.dmg` from [Releases](../../releases), and optionally verify it against `SHA256SUMS.txt` (`shasum -a 256 --ignore-missing -c SHA256SUMS.txt` — the flag skips listed files you didn't download).
 2. Open the DMG and drag **ThoughtMeter** to Applications.
 3. First launch: ThoughtMeter is open-source and currently **not notarized** (no paid Apple Developer membership yet), so macOS will block the first open. Right-click the app → **Open** → **Open**, or approve it under **System Settings ▸ Privacy & Security**. Please don't disable Gatekeeper globally — it protects you.
 4. Follow onboarding: grant **Input Monitoring** (required to count keystrokes), pick your tools, and you're done.

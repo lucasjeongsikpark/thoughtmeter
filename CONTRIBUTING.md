@@ -116,5 +116,6 @@ PRIVACY.md in the same PR and explain why.
 
 Maintainers: `make release VERSION=x.y.z` runs tests, builds, packages
 (DMG/ZIP/extension zip/checksums), generates the Homebrew cask, and prints
-the manual checklist. `packaging/release-config.sh` is the only place
-versions and IDs live.
+the manual checklist. `packaging/release-config.sh` is the single source for
+the app version and IDs; the Chrome extension versions independently through
+its own `manifest.json`, which the packaging scripts read for artifact names.

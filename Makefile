@@ -16,7 +16,7 @@ dev: ## Build a debug bundle and launch it
 test: ## Run all automated tests (Swift + extension)
 	@scripts/test.sh
 
-build: ## arm64 release build + assembled dist/ThoughtMeter.app (ad-hoc signed)
+build: ## arm64 release build + assembled dist/ThoughtMeter.app (cert-signed when the identity exists, else ad-hoc)
 	@scripts/build.sh release
 
 package: build ## DMG + ZIP + extension zip + checksums + cask in dist/

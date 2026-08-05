@@ -68,7 +68,14 @@ enum NativeHostInstaller {
     static func allowedOrigins() -> [String] {
         var ids: [String] = []
         if let production = ReleaseConfig.productionExtensionID { ids.append(production) }
-        if let development = ReleaseConfig.developmentExtensionID { ids.append(development) }
+        // One malformed origin invalidates the ENTIRE manifest in Chrome,
+        // which would sever the store extension's connection too — never let
+        // a bad saved dev ID through. (Settings validates on entry; this
+        // covers a value persisted before that check existed.)
+        if let development = ReleaseConfig.developmentExtensionID,
+           ChromeExtensionID.isPlausible(development) {
+            ids.append(development)
+        }
         return ids.map { "chrome-extension://\($0)/" }
     }
 

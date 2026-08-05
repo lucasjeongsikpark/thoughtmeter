@@ -33,8 +33,11 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/ThoughtMeter" "$APP/Contents/MacOS/ThoughtMeter"
 cp "$BIN_DIR/thoughtmeter-native-host" "$APP/Contents/MacOS/thoughtmeter-native-host"
 
-# SPM resource bundle (bundled domain icons). Bundle.module finds it in
-# Contents/Resources of the assembled app.
+# SPM resource bundle (bundled domain icons) → Contents/Resources. The app
+# resolves it via Bundle.main.resourceURL (IconCache) — Bundle.module must
+# never be used: its accessor checks only the .app ROOT and the build
+# machine's absolute .build path, so it crashes on every other machine
+# (verify.sh's clean-machine launch guard exists for exactly this).
 if [[ -d "$BIN_DIR/ThoughtMeter_ThoughtMeter.bundle" ]]; then
   cp -R "$BIN_DIR/ThoughtMeter_ThoughtMeter.bundle" "$APP/Contents/Resources/"
 else

@@ -27,7 +27,7 @@ targets:
         GENERATE_INFOPLIST_FILE: "YES"
         INFOPLIST_KEY_LSUIElement: "YES"
         INFOPLIST_KEY_CFBundleDisplayName: ThoughtMeter
-        MARKETING_VERSION: "0.1.0"
+        MARKETING_VERSION: "0.1.2"
     dependencies:
       - target: thoughtmeter-native-host
         embed: true

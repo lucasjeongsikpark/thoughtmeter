@@ -58,7 +58,6 @@ check_absent 'document\.body|innerText|innerHTML' \
   "page-content access is forbidden in the extension background" "$ROOT/extensions/chrome/src/background.js" "$ROOT/extensions/chrome/src/lib.js"
 
 echo "==> checking manifest permissions are minimal"
-EXPECTED='"permissions": ["tabs", "nativeMessaging", "alarms"]'
 if ! tr -d ' \n' < "$ROOT/extensions/chrome/manifest.json" | grep -q '"permissions":\["tabs","nativeMessaging","alarms"\]'; then
   fail "extension permissions changed — update PRIVACY.md and this check together"
 fi
