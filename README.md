@@ -10,7 +10,7 @@ It is a lightweight, local-first macOS menu bar app that counts keystrokes insid
 
 > Not every keystroke is a thought. But thinking leaves traces.
 
-<!-- screenshot: docs/assets/dashboard.png — see .local-project screenshot checklist -->
+<img src="docs/assets/dashboard-30days.png" alt="ThoughtMeter dashboard showing 30 days of Thought Input, a per-day bar chart, and a per-tool breakdown" width="900">
 
 ## What it does
 
@@ -76,6 +76,16 @@ The one-paragraph version: ThoughtMeter stores **minute-level aggregate counts p
 - **Today** — summary cards (total, vs 7-day average, top source, peak hour), hourly chart, per-source bars, 7-day trend
 - **7 Days / 30 Days** — daily totals and per-source breakdown
 - **Proof of Thought** — today's trace as a 1200×630 PNG, rendered locally and saved wherever you choose
+
+<img src="docs/assets/dashboard-today.png" alt="Today view: total keystrokes, comparison with the 7-day average, top source, peak hour, an hourly chart, per-source bars, and a 7-day trend" width="900">
+
+The menu bar item carries the day's total and the top tools, with tracking state always visible:
+
+<img src="docs/assets/popover.png" alt="Menu bar popover showing today's total, the top three tools, tracking state, and buttons for dashboard, pause, settings and quit" width="380">
+
+**Proof of Thought** renders locally and uploads nothing — you choose where the file goes:
+
+<img src="docs/assets/proof-of-thought.png" alt="Proof of Thought card: today's keystroke total, peak hour, and a top-three tool breakdown" width="700">
 
 ## Updating
 
