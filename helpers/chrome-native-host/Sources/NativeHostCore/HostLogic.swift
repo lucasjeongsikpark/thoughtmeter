@@ -76,6 +76,29 @@ public enum HostLogic {
         ChromeDomainState(trackedDomain: nil, updatedAt: now)
     }
 
+    /// Whether a state write may proceed. Each Chrome profile with the
+    /// extension spawns its OWN host process, and all of them share one
+    /// state file: without this gate, an unfocused profile's keepalive null
+    /// (or its disconnect write when its service worker suspends) clobbers
+    /// the focused profile's fresh tracked state once a minute, silently
+    /// stopping Chrome counting for most of every minute.
+    ///
+    /// Rules: a tracked (non-nil) write always wins. A null write proceeds
+    /// unless the file currently holds a fresh tracked state that some
+    /// OTHER writer produced (current != our own last write). With a single
+    /// profile the file always matches our last write, so disconnect/EOF
+    /// semantics are unchanged.
+    public static func shouldWriteState(_ new: ChromeDomainState,
+                                        over current: ChromeDomainState?,
+                                        lastWrittenByUs: ChromeDomainState?,
+                                        now: Int64) -> Bool {
+        if new.trackedDomain != nil { return true }
+        guard let current, current.trackedDomain != nil, current.isFresh(now: now) else {
+            return true
+        }
+        return current == lastWrittenByUs
+    }
+
     public static func encodeResponse(_ outcome: Outcome) throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]

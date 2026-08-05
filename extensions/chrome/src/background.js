@@ -87,12 +87,19 @@ chrome.runtime.onInstalled.addListener(() => { refreshState(); });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message && message.type === "getStatus") {
-    sendResponse({
-      connected,
-      host: lastHost,
-      tracked: lastAck ? lastAck.tracked : null,
-      trackedDomain: lastAck ? lastAck.trackedDomain : null,
+    // The popup's query may be what woke a suspended worker, resetting the
+    // module state above. Refresh first so the answer reflects the reconnect
+    // this wakeup triggers — answering synchronously would report
+    // "Not connected" at exactly the diagnostic moment the popup exists for.
+    refreshState().then(() => {
+      sendResponse({
+        connected,
+        host: lastHost,
+        tracked: lastAck ? lastAck.tracked : null,
+        trackedDomain: lastAck ? lastAck.trackedDomain : null,
+      });
     });
+    return true; // keep the sendResponse channel open across the async work
   }
   return false;
 });

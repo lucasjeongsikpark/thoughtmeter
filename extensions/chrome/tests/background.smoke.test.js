@@ -67,10 +67,14 @@ test("background worker wires listeners, keepalive, and hostname-only state", as
   assert.ok(!wire.includes("very-private-path"), "URL path must never reach the host");
   assert.ok(!wire.includes("secret"), "query string must never reach the host");
 
-  // Host ack updates popup status.
+  // Host ack updates popup status. getStatus answers asynchronously (it
+  // refreshes state first, since the popup's query may be what woke a
+  // suspended worker) and must keep the response channel open.
   hostMessage()({ type: "stateAck", tracked: true, trackedDomain: "claude.ai" });
   let status;
-  registered.messages[0]({ type: "getStatus" }, null, (response) => { status = response; });
+  const keepOpen = registered.messages[0]({ type: "getStatus" }, null, (response) => { status = response; });
+  assert.equal(keepOpen, true, "getStatus must return true to keep sendResponse usable");
+  await new Promise((resolve) => setTimeout(resolve, 20)); // refresh completes, then responds
   assert.equal(status.connected, true);
   assert.equal(status.host, "claude.ai");
   assert.equal(status.tracked, true);

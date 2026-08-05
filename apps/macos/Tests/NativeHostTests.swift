@@ -90,6 +90,36 @@ let hostLogicTests: [TC] = [
         let state = HostLogic.disconnectState(now: 900)
         t.expectEqual(state, ChromeDomainState(trackedDomain: nil, updatedAt: 900))
     },
+    TC("write gate: tracked writes always win") { t in
+        let tracked = ChromeDomainState(trackedDomain: "claude.ai", updatedAt: 1000)
+        let foreignNull = ChromeDomainState(trackedDomain: nil, updatedAt: 990)
+        t.expect(HostLogic.shouldWriteState(tracked, over: foreignNull, lastWrittenByUs: nil, now: 1000))
+    },
+    TC("write gate: null must not clobber another host's fresh tracked state") { t in
+        // Two Chrome profiles = two hosts sharing one state file. The
+        // unfocused profile's keepalive null (or its disconnect when its
+        // worker suspends) must not erase the focused profile's state.
+        let foreignTracked = ChromeDomainState(trackedDomain: "claude.ai", updatedAt: 995)
+        let ourNull = ChromeDomainState(trackedDomain: nil, updatedAt: 1000)
+        t.expect(!HostLogic.shouldWriteState(ourNull, over: foreignTracked, lastWrittenByUs: nil, now: 1000))
+        let ourOldWrite = ChromeDomainState(trackedDomain: "chatgpt.com", updatedAt: 900)
+        t.expect(!HostLogic.shouldWriteState(ourNull, over: foreignTracked, lastWrittenByUs: ourOldWrite, now: 1000))
+    },
+    TC("write gate: null overwrites our own tracked state (single-profile disconnect)") { t in
+        let ours = ChromeDomainState(trackedDomain: "claude.ai", updatedAt: 995)
+        let disconnect = ChromeDomainState(trackedDomain: nil, updatedAt: 1000)
+        t.expect(HostLogic.shouldWriteState(disconnect, over: ours, lastWrittenByUs: ours, now: 1000),
+                 "EOF/disconnect semantics unchanged when we are the only writer")
+    },
+    TC("write gate: null overwrites stale, null, or missing state") { t in
+        let ourNull = ChromeDomainState(trackedDomain: nil, updatedAt: 1000)
+        let staleForeign = ChromeDomainState(trackedDomain: "claude.ai", updatedAt: 0)
+        t.expect(HostLogic.shouldWriteState(ourNull, over: staleForeign, lastWrittenByUs: nil, now: 1000),
+                 "a dead host's stale state may be overwritten")
+        let currentNull = ChromeDomainState(trackedDomain: nil, updatedAt: 999)
+        t.expect(HostLogic.shouldWriteState(ourNull, over: currentNull, lastWrittenByUs: nil, now: 1000))
+        t.expect(HostLogic.shouldWriteState(ourNull, over: nil, lastWrittenByUs: nil, now: 1000))
+    },
 ]
 
 let atomicFileTests: [TC] = [

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ThoughtMeter Connector",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Tells the ThoughtMeter macOS app which AI website is active in Chrome. Sends only the hostname, locally. Never page content.",
   "permissions": ["tabs", "nativeMessaging", "alarms"],
   "background": {

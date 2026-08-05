@@ -38,13 +38,28 @@ let configCache = ConfigCache()
 
 func nowUnix() -> Int64 { Int64(Date().timeIntervalSince1970) }
 
+/// Other Chrome profiles run their own host against the same file, so a
+/// null write must not clobber a fresh tracked state another host produced
+/// (HostLogic.shouldWriteState).
+var lastWrittenState: ChromeDomainState?
+
 func writeState(_ state: ChromeDomainState) {
-    try? AtomicFile.writeJSON(state, to: DataPaths.chromeStateURL)
+    let current = AtomicFile.readJSON(ChromeDomainState.self, from: DataPaths.chromeStateURL)
+    guard HostLogic.shouldWriteState(state, over: current,
+                                     lastWrittenByUs: lastWrittenState,
+                                     now: nowUnix()) else { return }
+    if (try? AtomicFile.writeJSON(state, to: DataPaths.chromeStateURL)) != nil {
+        lastWrittenState = state
+    }
 }
 
 func send(_ outcome: HostLogic.Outcome) {
     guard let payload = try? HostLogic.encodeResponse(outcome) else { return }
-    stdoutHandle.write(NativeMessageFraming.encode(payload))
+    do {
+        try stdoutHandle.write(contentsOf: NativeMessageFraming.encode(payload))
+    } catch {
+        shutdown() // Chrome closed the pipe mid-write — same as EOF.
+    }
 }
 
 func shutdown() -> Never {
@@ -52,6 +67,11 @@ func shutdown() -> Never {
     writeState(HostLogic.disconnectState(now: nowUnix()))
     exit(0)
 }
+
+// Writing to a pipe Chrome already closed raises SIGPIPE, whose default
+// action kills the process BEFORE shutdown() can record the disconnect.
+// Ignore it; the throwing write(contentsOf:) in send() handles EPIPE.
+signal(SIGPIPE, SIG_IGN)
 
 try? DataPaths.ensureDirectories()
 

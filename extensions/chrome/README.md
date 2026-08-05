@@ -37,7 +37,7 @@ counted — and typing everywhere else in Chrome cannot.
 2. `chrome://extensions` → enable Developer mode → "Load unpacked" → select
    this `extensions/chrome/` directory.
 3. Copy the extension ID Chrome assigned.
-4. In ThoughtMeter: Settings ▸ Chrome → paste the ID → "Save ID & Re-register".
+4. In ThoughtMeter: Settings ▸ Chrome → paste the ID → "Save ID & Register".
    (Or run `scripts/install-native-host.sh --dev-id <ID>` from the repo root.)
 5. Reload the extension. The popup should show "Connected".
 
