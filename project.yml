@@ -1,0 +1,42 @@
+# Optional XcodeGen project for contributors who prefer Xcode.
+# The canonical build is Swift Package Manager (make build) — this file is a
+# convenience, generated with `make generate`, and is not exercised by CI.
+name: ThoughtMeter
+options:
+  bundleIdPrefix: org.thoughtmeter
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    ARCHS: arm64
+    SWIFT_VERSION: "5.9"
+    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGNING_REQUIRED: "NO"
+
+targets:
+  ThoughtMeter:
+    type: application
+    platform: macOS
+    sources:
+      - apps/macos/Sources/ThoughtMeterApp
+      - apps/macos/Sources/ThoughtMeterKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.thoughtmeter.app
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_LSUIElement: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: ThoughtMeter
+        MARKETING_VERSION: "0.1.0"
+    dependencies:
+      - target: thoughtmeter-native-host
+        embed: true
+        codeSign: false
+
+  thoughtmeter-native-host:
+    type: tool
+    platform: macOS
+    sources:
+      - helpers/chrome-native-host/Sources/thoughtmeter-native-host
+      - helpers/chrome-native-host/Sources/NativeHostCore
+      - apps/macos/Sources/ThoughtMeterKit

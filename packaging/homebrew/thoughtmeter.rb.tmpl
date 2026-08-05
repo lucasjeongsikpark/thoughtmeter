@@ -1,0 +1,33 @@
+cask "thoughtmeter" do
+  version "__VERSION__"
+  sha256 "__SHA256__"
+
+  url "https://github.com/__OWNER__/__REPO__/releases/download/v#{version}/ThoughtMeter-#{version}.dmg"
+  name "ThoughtMeter"
+  desc "Local-first menu bar app that counts keystrokes inside the AI tools you choose"
+  homepage "https://github.com/__OWNER__/__REPO__"
+
+  depends_on macos: ">= :sonoma"
+  depends_on arch: :arm64
+
+  app "ThoughtMeter.app"
+
+  uninstall quit: "org.thoughtmeter.app"
+
+  zap trash: [
+    "~/Library/Application Support/Google/Chrome/NativeMessagingHosts/org.thoughtmeter.chromehost.json",
+    "~/Library/Application Support/ThoughtMeter",
+    "~/Library/Preferences/org.thoughtmeter.app.plist",
+  ]
+
+  caveats <<~EOS
+    ThoughtMeter is open source and currently distributed without Apple
+    notarization (no paid Developer Program membership). On first launch,
+    macOS may block the app: right-click ThoughtMeter.app → Open → Open,
+    or approve it in System Settings → Privacy & Security.
+
+    ThoughtMeter needs the Input Monitoring permission to count keystrokes.
+    After updates you may need to re-enable it in
+    System Settings → Privacy & Security → Input Monitoring.
+  EOS
+end
