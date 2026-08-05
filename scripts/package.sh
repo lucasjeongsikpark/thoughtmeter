@@ -10,6 +10,14 @@ source "$ROOT/packaging/release-config.sh"
 APP="$ROOT/dist/ThoughtMeter.app"
 [[ -d "$APP" ]] || { echo "error: $APP missing — run scripts/build.sh first" >&2; exit 1; }
 
+# The artifact names and cask come solely from $VERSION — refuse to package
+# a stale dist/ app that would claim a version its payload does not contain.
+APP_VERSION="$(plutil -extract CFBundleShortVersionString raw "$APP/Contents/Info.plist" 2>/dev/null || echo "unknown")"
+if [[ "$APP_VERSION" != "$VERSION" ]]; then
+  echo "error: staged app is $APP_VERSION but release-config VERSION=$VERSION — re-run scripts/build.sh" >&2
+  exit 1
+fi
+
 DIST="$ROOT/dist"
 DMG="$DIST/ThoughtMeter-$VERSION.dmg"
 ZIP="$DIST/ThoughtMeter-$VERSION.zip"

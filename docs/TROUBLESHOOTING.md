@@ -38,12 +38,12 @@ Monitoring dev loop" for a stable identity that survives rebuilds.
 
 ## The Chrome extension says "Not connected"
 
-1. ThoughtMeter app: Settings ▸ Chrome → **Register Connector** (the manifest
+1. ThoughtMeter app: Settings ▸ Chrome → **Save ID & Register** (the manifest
    must point at the app's current location — re-register after moving it).
 2. `chrome://extensions` → reload the ThoughtMeter Connector.
 3. Restart Chrome completely (`⌘Q`).
 4. Unpacked/dev extension: its ID must be saved in Settings ▸ Chrome
-   ("Save ID & Re-register").
+   ("Save ID & Register").
 
 ## Counts look attributed to the wrong Chrome site
 

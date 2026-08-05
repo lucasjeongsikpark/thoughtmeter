@@ -18,13 +18,13 @@ manifest. Then remove the extension in Chrome (see step 5 below).
 3. **Remove the Chrome connector manifest** (only exists if you set up the
    extension):
    ```bash
-   rm "~/Library/Application Support/Google/Chrome/NativeMessagingHosts/org.thoughtmeter.chromehost.json"
+   rm "$HOME/Library/Application Support/Google/Chrome/NativeMessagingHosts/org.thoughtmeter.chromehost.json"
    ```
    or from a clone: `scripts/uninstall-native-host.sh`.
 4. **Delete your data** (optional — skipping this keeps your history for a
    future reinstall):
    ```bash
-   rm -rf "~/Library/Application Support/ThoughtMeter"
+   rm -rf "$HOME/Library/Application Support/ThoughtMeter"
    ```
    You can also do this from inside the app first
    (Settings ▸ Data ▸ Delete All ThoughtMeter Data).

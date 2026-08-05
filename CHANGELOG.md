@@ -3,6 +3,39 @@
 All notable changes to ThoughtMeter are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
+## [Unreleased]
+
+### Fixed
+- Counts drained for a flush are no longer lost if the database write fails
+  (disk full, I/O error): they merge back into memory and retry on the next
+  cycle, as the surrounding code always claimed. A keystroke recorded in the
+  instant between removing a source and re-resolving no longer aborts the
+  whole batch.
+- The "Proof of Thought" card always renders **today's** numbers, as its
+  headline says — previously, sharing while the dashboard showed 7 or
+  30 Days exported the multi-day total labeled "Today's Thought Input".
+- "vs 7-day average" now really averages the 7 days ending yesterday
+  (it silently used only 6).
+- With two or more Chrome profiles running the extension, the unfocused
+  profile's keepalive no longer erases the focused profile's tracked state,
+  which silently paused Chrome counting for most of every minute.
+- The native host now records the disconnect state even when Chrome closes
+  the pipe mid-write (previously SIGPIPE killed it first).
+- The extension popup no longer shows a stale "Not connected" when its own
+  opening is what woke the service worker; it refreshes before answering.
+- Database read errors mid-query are reported instead of silently returning
+  truncated results (worst case was an incomplete CSV export saved as a
+  "successful" backup).
+- A failed "Save Image…" of the share card now shows an error instead of
+  closing the dialog as if it had saved.
+- Counts crossing 999,950 display as "1M" in the menu bar, not "1000K".
+- Custom-domain input like `example.com/login?next=https://evil.com` now
+  parses as `example.com` instead of registering the embedded URL's host.
+- Docs: the manual uninstall commands now expand `~` correctly (the data
+  folder deletion previously deleted nothing while appearing to succeed);
+  Settings ▸ Chrome button referenced by its real label; download
+  verification command works when only some assets were downloaded.
+
 ## [0.1.1] — 2026-08-05
 
 ### Fixed
@@ -30,8 +63,8 @@ First public release.
   inside user-selected AI tools and workspaces — the **Thought Input** metric.
 - Two tracking modes: *Selected tools only* (default) and *All recognized AI tools*.
 - Recognized catalog (verified against installed bundles at runtime):
-  AI apps (ChatGPT, Claude, Perplexity, Microsoft Copilot, Raycast, LM Studio,
-  Ollama, Jan), AI-assisted editors (VS Code family, Cursor, Windsurf, Zed,
+  AI apps (ChatGPT, Claude, Perplexity, Microsoft Copilot, Grok, Raycast,
+  LM Studio, Ollama, Jan), AI-assisted editors (VS Code family, Cursor, Windsurf, Zed,
   Trae, Xcode, IntelliJ IDEA, PyCharm, WebStorm), and terminals (Terminal,
   iTerm2, Warp, Ghostty, Alacritty, kitty, WezTerm); custom apps and domains.
 - Chrome domain tracking via a Manifest V3 extension + local Native Messaging

@@ -16,6 +16,12 @@ fail() {
 
 check_absent() {
   local pattern="$1" description="$2"; shift 2
+  # Fail closed: a missing scan path would make the grep pass vacuously,
+  # silently voiding the invariant after a rename/move of sources.
+  local path
+  for path in "$@"; do
+    [[ -e "$path" ]] || fail "scan path missing (update this script): $path"
+  done
   local hits
   hits=$(grep -rInE "$pattern" "$@" 2>/dev/null || true)
   if [[ -n "$hits" ]]; then

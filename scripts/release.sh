@@ -80,7 +80,8 @@ the AI tools and workspaces you choose. Counts, never content.
 | thoughtmeter-extension-$EXT_VERSION.zip | Chrome Web Store upload package |
 | SHA256SUMS.txt | Checksums |
 
-Verify a download: \`shasum -a 256 -c SHA256SUMS.txt\`
+Verify a download: \`shasum -a 256 --ignore-missing -c SHA256SUMS.txt\`
+(\`--ignore-missing\` skips listed files you did not download.)
 EOF
 echo "    wrote dist/RELEASE_NOTES.md"
 
@@ -90,10 +91,13 @@ cat <<EOF
  1. Review dist/RELEASE_NOTES.md
  2. Commit + tag:  git tag v$VERSION
  3. Push (explicitly, when ready):  git push origin main v$VERSION
- 4. Create GitHub Release v$VERSION; upload:
+ 4. Create GitHub Release v$VERSION; upload ALL of:
       dist/ThoughtMeter-$VERSION.dmg
       dist/ThoughtMeter-$VERSION.zip
+      dist/thoughtmeter-extension-$EXT_VERSION.zip
       dist/SHA256SUMS.txt
+    (SHA256SUMS.txt references the extension zip — omitting it leaves a
+    dangling checksum entry on the release page)
  5. Copy dist/thoughtmeter.rb → homebrew tap repo Casks/thoughtmeter.rb
  6. Upload dist/thoughtmeter-extension-$EXT_VERSION.zip to the Chrome Web Store
  7. After the store assigns/keeps the extension ID, confirm
