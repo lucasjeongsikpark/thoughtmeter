@@ -26,6 +26,21 @@ else
   echo "    clean"
 fi
 
+# Releasing ad-hoc after having released with a certificate would silently
+# invalidate every existing user's Input Monitoring grant, so refuse up front
+# rather than discovering it in verify (DECISIONS D30).
+if [[ -n "${RELEASE_SIGN_IDENTITY:-}" ]]; then
+  echo "==> signing identity"
+  if security find-identity -p codesigning 2>/dev/null | grep -q "\"$RELEASE_SIGN_IDENTITY\""; then
+    echo "    $RELEASE_SIGN_IDENTITY (present in keychain)"
+  else
+    echo "error: release signing identity '$RELEASE_SIGN_IDENTITY' is not in the keychain." >&2
+    echo "Releasing ad-hoc would break the Input Monitoring grant for every existing user." >&2
+    echo "Restore the certificate, or clear RELEASE_SIGN_IDENTITY deliberately." >&2
+    exit 1
+  fi
+fi
+
 echo "==> tests"
 "$ROOT/scripts/test.sh"
 
@@ -51,10 +66,10 @@ A lightweight, local-first macOS menu bar app that counts keystrokes inside
 the AI tools and workspaces you choose. Counts, never content.
 
 - macOS 14+ (Sonoma), Apple Silicon only
-- Unsigned build (no Apple notarization): on first launch use
+- Not notarized (no Apple Developer Program): on first launch use
   right-click → Open, or approve in System Settings → Privacy & Security
 - Requires the Input Monitoring permission (counting only — key identities
-  are never recorded)
+  are never recorded); granting it once carries over to later versions
 
 ## Artifacts
 
@@ -83,5 +98,8 @@ cat <<EOF
  6. Upload dist/thoughtmeter-extension-$VERSION.zip to the Chrome Web Store
  7. After the store assigns/keeps the extension ID, confirm
     CHROME_EXTENSION_ID_PROD in packaging/release-config.sh matches
- 8. Clean-machine test per docs/INSTALL.md
+ 8. Clean-machine test per docs/INSTALL.md — including the update path:
+    grant Input Monitoring, replace the app with the next build, and confirm
+    counting resumes without re-granting (only verified on the signing
+    machine so far; see .local-project/DECISIONS.md D30)
 EOF

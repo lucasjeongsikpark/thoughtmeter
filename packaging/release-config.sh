@@ -20,3 +20,16 @@ CHROME_EXTENSION_ID_PROD="UNSET"
 
 # Native messaging host name (must match the extension's connectNative call).
 NATIVE_HOST_NAME="org.thoughtmeter.chromehost"
+
+# Code-signing identity for builds. Any stable code-signing certificate (a
+# self-signed one is enough) keeps the app's code identity constant across
+# versions, so macOS does NOT invalidate the user's Input Monitoring grant when
+# they update. Ad-hoc signing pins the grant to the code hash instead, which
+# every new build changes — verified empirically, see DECISIONS.md D30.
+#
+# This is NOT notarization: Gatekeeper still blocks the first launch, and no
+# release material may claim otherwise.
+#
+# Builds fall back to ad-hoc when this identity is absent from the keychain, so
+# contributors can build without one. Releases refuse to (scripts/release.sh).
+RELEASE_SIGN_IDENTITY="ThoughtMeter"

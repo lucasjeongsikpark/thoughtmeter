@@ -29,11 +29,11 @@ convenience and is not exercised by CI.
 
 ### The Input Monitoring dev loop
 
-macOS ties the Input Monitoring grant to the app's code signature, and every
-ad-hoc re-sign (the default) creates a new identity — so **each rebuild
-silently invalidates the permission** and counting stops until you toggle
-ThoughtMeter off and on in System Settings ▸ Privacy & Security ▸ Input
-Monitoring. The app detects this and shows a warning state, but for a
+macOS ties the Input Monitoring grant to the app's code identity. With an
+ad-hoc signature that identity is the hash of the compiled code itself, so
+**each rebuild silently invalidates the permission** and counting stops until
+you toggle ThoughtMeter off and on in System Settings ▸ Privacy & Security ▸
+Input Monitoring. The app detects this and shows a warning state, but for a
 pleasant dev loop, sign with a stable identity instead:
 
 1. Keychain Access → Certificate Assistant → Create a Certificate…
@@ -42,8 +42,14 @@ pleasant dev loop, sign with a stable identity instead:
 2. Build with it: `TM_SIGN_IDENTITY="ThoughtMeter Dev" make dev`
 3. Grant Input Monitoring once — it now survives rebuilds.
 
-Release artifacts stay ad-hoc signed (`make release` ignores your local
-identity unless you export `TM_SIGN_IDENTITY`).
+The certificate does not need to be trusted; signing works regardless, and
+the resulting designated requirement references the certificate instead of the
+code hash. Confirm with `codesign -d -r- <app>`.
+
+Releases use `RELEASE_SIGN_IDENTITY` from `packaging/release-config.sh` for the
+same reason, so users grant the permission once rather than after every
+update. Builds fall back to ad-hoc when that identity is absent from your
+keychain, so cloning and running `make build` works without any setup.
 
 ### Why a custom test runner?
 

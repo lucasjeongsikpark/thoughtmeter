@@ -39,5 +39,9 @@ First public release.
 
 ### Security / privacy
 - No network code, no telemetry, no analytics, no update checks.
-- Distributed unsigned (ad-hoc signature) — not notarized; documented
-  first-launch and update caveats.
+- **Not notarized** (no Apple Developer Program) — first launch requires
+  right-click → Open; the caveat is documented rather than worked around, and
+  users are never told to disable Gatekeeper.
+- Signed with a stable certificate so macOS keeps recognising the app across
+  versions: Input Monitoring is granted once and carries over to updates,
+  instead of silently breaking every time the app changes.

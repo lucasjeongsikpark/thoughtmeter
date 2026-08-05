@@ -83,7 +83,7 @@ The one-paragraph version: ThoughtMeter stores **minute-level aggregate counts p
 brew update && brew upgrade --cask thoughtmeter
 ```
 
-or replace the app in Applications with the new DMG's copy. Your history lives in `~/Library/Application Support/ThoughtMeter/` and survives updates. Because builds are unsigned, macOS may ask you to re-approve the app and re-grant Input Monitoring after an update — details in [docs/UPDATE.md](docs/UPDATE.md).
+or replace the app in Applications with the new DMG's copy. Your history lives in `~/Library/Application Support/ThoughtMeter/` and survives updates. Because builds are not notarized, macOS may ask you to re-approve the app after an update; your Input Monitoring grant carries over — details in [docs/UPDATE.md](docs/UPDATE.md).
 
 ## Uninstalling
 

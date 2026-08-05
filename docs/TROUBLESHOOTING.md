@@ -21,18 +21,20 @@ Check, in order:
    the extension is connected (popover shows Chrome state; also see the
    extension's own popup).
 
-## Input Monitoring was granted but macOS keeps asking after updates
+## Input Monitoring was granted but counting stopped after an update
 
-Unsigned builds lose the permission whenever the binary changes — macOS ties
-the grant to the code signature, and every update (or rebuild from source)
-re-signs the app. ThoughtMeter notices within seconds and shows
-"Input Monitoring lost — re-grant needed" in the popover with a shortcut
-button. Toggle ThoughtMeter off/on in System Settings ▸ Privacy & Security ▸
-Input Monitoring; if the toggle seems stuck, remove the entry (–) and re-add
-the app (+), then relaunch. Your data is unaffected.
+macOS ties the grant to the app's code identity. Releases are signed with a
+stable certificate specifically so that identity does not change between
+versions, so this should not happen — but if it does, ThoughtMeter tells you
+instead of silently recording nothing: the popover reads "Input Monitoring
+lost — re-grant needed" with a shortcut button. Toggle ThoughtMeter off/on in
+System Settings ▸ Privacy & Security ▸ Input Monitoring; if the toggle seems
+stuck, remove the entry (–) and re-add the app (+), then relaunch. Your data
+is unaffected.
 
-Building from source repeatedly? See CONTRIBUTING.md "The Input Monitoring
-dev loop" for a stable self-signed identity that survives rebuilds.
+Building from source? Ad-hoc signed builds pin the grant to the exact compiled
+code, so **every rebuild invalidates it**. See CONTRIBUTING.md "The Input
+Monitoring dev loop" for a stable identity that survives rebuilds.
 
 ## The Chrome extension says "Not connected"
 

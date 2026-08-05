@@ -22,17 +22,20 @@ brew upgrade --cask thoughtmeter
 
 ## After updating: permissions
 
-Because releases are unsigned (ad-hoc signatures), macOS may treat an updated
-binary as a new app:
+Releases are **not notarized**, so macOS may ask you to approve the app again
+on first launch (right-click → Open, or Privacy & Security → Open Anyway).
 
-- You may need to approve the first launch again
-  (right-click → Open, or Privacy & Security → Open Anyway).
-- **Input Monitoring may need to be re-enabled.** ThoughtMeter detects this:
-  the menu bar icon shows a warning state and the popover offers a shortcut
-  to System Settings ▸ Privacy & Security ▸ Input Monitoring. If ThoughtMeter
-  appears there but is toggled off, toggle it on; if the toggle misbehaves,
-  remove ThoughtMeter from the list (–) and re-add it (+).
-- If you use the Chrome extension and moved the app to a different location,
-  re-register the connector in Settings ▸ Chrome.
+**Input Monitoring normally carries over.** Releases are signed with a stable
+certificate, which keeps the app's code identity the same from version to
+version, so macOS recognises the updated app as the one you already approved.
+
+If counting does stop after an update, ThoughtMeter tells you rather than
+silently recording nothing: the menu bar icon shows a warning state and the
+popover reads "Input Monitoring lost — re-grant needed" with a shortcut to
+System Settings ▸ Privacy & Security ▸ Input Monitoring. Toggle ThoughtMeter
+on there; if the toggle misbehaves, remove the entry (–) and re-add it (+).
+
+If you use the Chrome extension and moved the app to a different location,
+re-register the connector in Settings ▸ Chrome.
 
 Your recorded history is unaffected by any of this.

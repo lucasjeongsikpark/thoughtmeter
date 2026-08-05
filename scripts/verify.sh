@@ -4,6 +4,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=../packaging/release-config.sh
+source "$ROOT/packaging/release-config.sh"
 APP="${1:-$ROOT/dist/ThoughtMeter.app}"
 FAILURES=0
 
@@ -42,15 +44,35 @@ done
 min_version=$(plutil -extract LSMinimumSystemVersion raw "$APP/Contents/Info.plist")
 [[ "$min_version" == "14.0" ]] || fail "LSMinimumSystemVersion is $min_version, expected 14.0"
 
-echo "==> code signature (ad-hoc expected; NOT notarized by design)"
+echo "==> code signature (NOT notarized by design)"
 codesign --verify --deep "$APP" || fail "code signature does not verify"
-authority=$(codesign -dv "$APP" 2>&1 | grep -E '^Signature' || true)
-if codesign -dv "$APP" 2>&1 | grep -q 'Authority=Developer ID'; then
-  echo "    note: Developer ID signature found (config says ad-hoc)"
-elif codesign -dv "$APP" 2>&1 | grep -q 'Signature=adhoc'; then
+# Two output quirks worth knowing: Authority= appears only at --verbose=2 and
+# above, and the designated requirement (stdout) is prefixed with "# " for
+# ad-hoc signatures but not for certificate-backed ones.
+details=$(codesign -dv --verbose=2 "$APP" 2>&1)
+signature=$(printf '%s\n' "$details" | sed -n 's/^Signature=//p')
+authority=$(printf '%s\n' "$details" | sed -n 's/^Authority=//p' | head -1)
+requirement=$(codesign -d -r- "$APP" 2>/dev/null | sed -n 's/^#* *designated => *//p')
+
+if [[ -n "${RELEASE_SIGN_IDENTITY:-}" ]]; then
+  # A stable identity is configured, so the designated requirement must be
+  # anchored to the certificate. If it is pinned to the code hash instead, the
+  # build was signed ad-hoc and shipping it would invalidate the Input
+  # Monitoring grant of every existing user (DECISIONS D30).
+  if [[ "$authority" != "$RELEASE_SIGN_IDENTITY" && "$authority" != "Developer ID"* ]]; then
+    fail "signed by '${authority:-${signature:-unknown}}', expected '$RELEASE_SIGN_IDENTITY' (packaging/release-config.sh)"
+  fi
+  case "$requirement" in
+    *"certificate leaf"*|*"anchor apple"*)
+      echo "    stable identity confirmed: $authority" ;;
+    *)
+      fail "designated requirement is pinned to the code hash ($requirement) — every update would break the user's Input Monitoring grant" ;;
+  esac
+elif [[ "$signature" == "adhoc" ]]; then
   echo "    ad-hoc signature confirmed"
+  echo "    note: users must re-grant Input Monitoring after every update"
 else
-  fail "unexpected signature state: $authority"
+  echo "    signed by: ${authority:-unknown}"
 fi
 
 echo "==> privacy + network checks"

@@ -59,13 +59,21 @@ plutil -lint "$APP/Contents/Info.plist" >/dev/null
 
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
-# Code signing. Default is ad-hoc (no Apple Developer Program; NOT
-# notarization). Caveat: every ad-hoc re-sign produces a NEW code identity,
-# so macOS invalidates the Input Monitoring grant on each rebuild.
-# For development, set TM_SIGN_IDENTITY to a self-signed code-signing
-# certificate to keep a stable identity across rebuilds (see CONTRIBUTING.md
-# "The Input Monitoring dev loop").
-SIGN_IDENTITY="${TM_SIGN_IDENTITY:--}"
+# Code signing (never notarization — there is no Apple Developer Program here).
+# Preference order: TM_SIGN_IDENTITY env → RELEASE_SIGN_IDENTITY from
+# release-config.sh → ad-hoc. A stable certificate keeps the code identity
+# constant so the Input Monitoring grant survives rebuilds and user updates;
+# ad-hoc pins it to the code hash, which every build changes (DECISIONS D30).
+SIGN_IDENTITY="${TM_SIGN_IDENTITY:-${RELEASE_SIGN_IDENTITY:--}}"
+
+# -p codesigning without -v on purpose: a self-signed certificate is untrusted
+# (CSSMERR_TP_NOT_TRUSTED) yet signs perfectly well, and -v would hide it.
+if [[ "$SIGN_IDENTITY" != "-" ]] \
+  && ! security find-identity -p codesigning 2>/dev/null | grep -q "\"$SIGN_IDENTITY\""; then
+  echo "==> note: signing identity '$SIGN_IDENTITY' is not in the keychain — falling back to ad-hoc"
+  SIGN_IDENTITY="-"
+fi
+
 if [[ "$SIGN_IDENTITY" == "-" ]]; then
   echo "==> ad-hoc code signing (rebuilds reset the Input Monitoring grant)"
 else
