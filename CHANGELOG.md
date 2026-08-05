@@ -3,7 +3,11 @@
 All notable changes to ThoughtMeter are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
-## [Unreleased]
+## [0.1.2] — 2026-08-05
+
+Bug-fix release: every defect found in a full-repository audit.
+The Chrome extension is updated separately (its 0.1.1 fixes the popup
+showing a stale "Not connected" right after waking).
 
 ### Fixed
 - Counts drained for a flush are no longer lost if the database write fails
