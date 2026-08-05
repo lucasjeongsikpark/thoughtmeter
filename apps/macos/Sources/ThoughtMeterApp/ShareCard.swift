@@ -89,13 +89,13 @@ struct ShareCardView: View {
                 .padding(.top, 6)
 
                 if includeSources {
-                    HStack(spacing: 40) {
-                        if let top = stats.bySource.first {
-                            fact("Top tool", top.source.displayName)
-                        }
+                    VStack(alignment: .leading, spacing: 22) {
+                        // No "Top tool" fact: the breakdown's first row is the
+                        // top tool, and printing it twice reads as a mistake.
                         if let peak = stats.peakHour {
                             fact("Peak hour", peakLabel(peak))
                         }
+                        breakdown
                     }
                     .padding(.top, 26)
                 }
@@ -125,6 +125,47 @@ struct ShareCardView: View {
             .padding(56)
         }
         .frame(width: 1200, height: 630)
+    }
+
+    /// Top sources as name + proportional bar + exact count. Text-only (no
+    /// app icons): ImageRenderer runs outside a window, so keeping the card to
+    /// vector text and shapes makes the export deterministic.
+    @ViewBuilder
+    private var breakdown: some View {
+        let rows = Array(stats.bySource.prefix(3))
+        let maximum = rows.first?.keystrokes ?? 0
+        if maximum > 0 {
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    HStack(spacing: 18) {
+                        Text(row.source.displayName)
+                            .font(.system(size: 25))
+                            .foregroundStyle(Color.black.opacity(0.7))
+                            .lineLimit(1)
+                            .frame(width: 300, alignment: .leading)
+
+                        ZStack(alignment: .leading) {
+                            Capsule()
+                                .fill(Color.black.opacity(0.08))
+                                .frame(width: 420, height: 12)
+                            Capsule()
+                                .fill(Color.black.opacity(0.55))
+                                .frame(width: max(12, 420 * barRatio(row.keystrokes, of: maximum)),
+                                       height: 12)
+                        }
+
+                        Text(CountFormatter.exact(row.keystrokes))
+                            .font(.system(size: 25, weight: .medium, design: .rounded))
+                            .foregroundStyle(Color.black.opacity(0.6))
+                    }
+                }
+            }
+        }
+    }
+
+    private func barRatio(_ value: Int, of maximum: Int) -> CGFloat {
+        guard maximum > 0 else { return 0 }
+        return CGFloat(value) / CGFloat(maximum)
     }
 
     private func fact(_ title: String, _ value: String) -> some View {

@@ -68,8 +68,10 @@ struct PopoverView: View {
                 }
             }
 
+            // Four controls at 280pt truncated their labels ("Setti…"). Keep
+            // the labels short AND the popover wide enough for all of them.
             HStack(spacing: 8) {
-                Button("Open Dashboard") {
+                Button("Dashboard") {
                     WindowManager.shared.showDashboard()
                 }
                 .controlSize(.small)
@@ -90,7 +92,7 @@ struct PopoverView: View {
             }
         }
         .padding(14)
-        .frame(width: 280)
+        .frame(width: 320)
         .onAppear {
             coordinator.popoverVisible = true
             coordinator.refreshNow()
