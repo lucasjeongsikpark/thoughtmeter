@@ -93,6 +93,31 @@ else
   echo "    signed by: ${authority:-unknown}"
 fi
 
+echo "==> clean-machine launch (resource bundle must resolve from the app itself)"
+# SPM's Bundle.module accessor bakes the BUILD MACHINE's absolute .build path
+# into the binary as a fallback. On the machine that built the app that path
+# exists, so a bundle-resolution bug stays invisible until a user launches on
+# another Mac — v0.1.0 shipped exactly that crash (D39). Masking the fallback
+# reproduces the clean machine: the app must render previews from its own
+# Contents/Resources alone.
+SPM_BUNDLE="$ROOT/.build/arm64-apple-macosx/release/ThoughtMeter_ThoughtMeter.bundle"
+PREVIEW_DIR="$(mktemp -d)"
+if [[ -d "$SPM_BUNDLE" ]]; then
+  mv "$SPM_BUNDLE" "$SPM_BUNDLE.masked"
+  trap 'mv "$SPM_BUNDLE.masked" "$SPM_BUNDLE" 2>/dev/null || true' EXIT
+fi
+if "$APP/Contents/MacOS/ThoughtMeter" --render-previews "$PREVIEW_DIR" >/dev/null 2>&1 \
+   && [[ -s "$PREVIEW_DIR/dashboard-today.png" ]]; then
+  echo "    launched and rendered with the build-dir fallback masked"
+else
+  fail "app failed to render with the .build fallback masked — it would crash on a clean machine (resource bundle not resolving from Contents/Resources)"
+fi
+if [[ -d "$SPM_BUNDLE.masked" ]]; then
+  mv "$SPM_BUNDLE.masked" "$SPM_BUNDLE"
+  trap - EXIT
+fi
+rm -rf "$PREVIEW_DIR"
+
 echo "==> privacy + network checks"
 "$ROOT/scripts/verify-privacy.sh" || FAILURES=$((FAILURES + 1))
 "$ROOT/scripts/verify-no-network.sh" "$APP" || FAILURES=$((FAILURES + 1))

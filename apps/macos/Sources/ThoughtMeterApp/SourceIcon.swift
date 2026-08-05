@@ -22,12 +22,35 @@ enum IconCache {
         return icon
     }
 
+    /// The SPM resource bundle, resolved by hand. `Bundle.module` must NOT be
+    /// touched here: its generated accessor checks only the .app ROOT and the
+    /// build machine's absolute .build path, while build.sh installs the bundle
+    /// into Contents/Resources — so evaluating it fatalErrors on every machine
+    /// except the one that built the app. v0.1.0 crashed at launch on a clean
+    /// machine exactly this way (D39).
+    private static let resourceBundle: Bundle? = {
+        let name = "ThoughtMeter_ThoughtMeter.bundle"
+        let candidates = [
+            Bundle.main.resourceURL,   // assembled .app: Contents/Resources
+            Bundle.main.bundleURL,     // bare executable next to .build output
+        ]
+        for base in candidates {
+            if let url = base?.appendingPathComponent(name),
+               let bundle = Bundle(url: url) {
+                return bundle
+            }
+        }
+        // Missing bundle degrades to monogram icons; it must never crash.
+        NSLog("ThoughtMeter: resource bundle not found — domain icons fall back to monograms")
+        return nil
+    }()
+
     /// Bundled favicon for a recognized domain (downloaded at development
     /// time into Resources/DomainIcons — the app never fetches at runtime).
     static func bundledDomainIcon(forDomain domain: String) -> NSImage? {
         if let cached = domainFavicons[domain] { return cached }
-        guard let url = Bundle.module.url(forResource: domain, withExtension: "png",
-                                          subdirectory: "DomainIcons"),
+        guard let url = resourceBundle?.url(forResource: domain, withExtension: "png",
+                                            subdirectory: "DomainIcons"),
               let image = NSImage(contentsOf: url) else { return nil }
         domainFavicons[domain] = image
         return image

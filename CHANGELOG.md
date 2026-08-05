@@ -3,7 +3,25 @@
 All notable changes to ThoughtMeter are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
-## [0.1.0] — unreleased (Public Beta)
+## [0.1.1] — unreleased
+
+### Fixed
+- **v0.1.0 crashed at launch on every machine except the one that built it.**
+  The Swift Package Manager resource-bundle accessor looks for the domain-icon
+  bundle at the app root and at the build machine's absolute `.build` path —
+  never in `Contents/Resources`, where the build installs it. On the build
+  machine the `.build` fallback silently masked the bug; everywhere else the
+  app hit `Fatal error: could not load resource bundle` as soon as a domain
+  icon rendered. Icons now resolve from the app's own Resources directory, a
+  missing bundle degrades to monogram icons instead of crashing, and
+  `make verify` now launches the app with the build-directory fallback masked
+  so this class of bug cannot pass verification again.
+
+### Added
+- The app now knows the Chrome Web Store extension ID, so the store-installed
+  ThoughtMeter Connector is accepted without pasting an ID into Settings.
+
+## [0.1.0] — 2026-08-04 (Public Beta)
 
 First public release.
 
