@@ -54,13 +54,24 @@ signature=$(printf '%s\n' "$details" | sed -n 's/^Signature=//p')
 authority=$(printf '%s\n' "$details" | sed -n 's/^Authority=//p' | head -1)
 requirement=$(codesign -d -r- "$APP" 2>/dev/null | sed -n 's/^#* *designated => *//p')
 
-if [[ -n "${RELEASE_SIGN_IDENTITY:-}" ]]; then
-  # A stable identity is configured, so the designated requirement must be
-  # anchored to the certificate. If it is pinned to the code hash instead, the
-  # build was signed ad-hoc and shipping it would invalidate the Input
+# Whether this machine could have signed with the release identity at all. CI
+# and contributor clones cannot, and build.sh correctly falls back to ad-hoc
+# there — so requiring a certificate unconditionally would fail every build
+# except the maintainer's. The mistake worth catching is narrower: the identity
+# WAS available and the build is still ad-hoc. release.sh separately refuses to
+# cut a release when the identity is missing, so releases stay covered.
+identity_available=0
+if [[ -n "${RELEASE_SIGN_IDENTITY:-}" ]] \
+  && security find-identity -p codesigning 2>&1 | grep -q "\"$RELEASE_SIGN_IDENTITY\""; then
+  identity_available=1
+fi
+
+if [[ $identity_available -eq 1 ]]; then
+  # The designated requirement must be anchored to the certificate. Pinned to
+  # the code hash means ad-hoc, and shipping that would invalidate the Input
   # Monitoring grant of every existing user (DECISIONS D30).
   if [[ "$authority" != "$RELEASE_SIGN_IDENTITY" && "$authority" != "Developer ID"* ]]; then
-    fail "signed by '${authority:-${signature:-unknown}}', expected '$RELEASE_SIGN_IDENTITY' (packaging/release-config.sh)"
+    fail "signed by '${authority:-${signature:-unknown}}' although '$RELEASE_SIGN_IDENTITY' is available in the keychain"
   fi
   case "$requirement" in
     *"certificate leaf"*|*"anchor apple"*)
@@ -70,7 +81,14 @@ if [[ -n "${RELEASE_SIGN_IDENTITY:-}" ]]; then
   esac
 elif [[ "$signature" == "adhoc" ]]; then
   echo "    ad-hoc signature confirmed"
-  echo "    note: users must re-grant Input Monitoring after every update"
+  if [[ -n "${RELEASE_SIGN_IDENTITY:-}" ]]; then
+    echo "    note: '$RELEASE_SIGN_IDENTITY' is not in this keychain, so this build"
+    echo "          cannot be released — users would have to re-grant Input"
+    echo "          Monitoring on update (see DECISIONS D30). Fine for CI and"
+    echo "          for building from source."
+  else
+    echo "    note: users must re-grant Input Monitoring after every update"
+  fi
 else
   echo "    signed by: ${authority:-unknown}"
 fi
