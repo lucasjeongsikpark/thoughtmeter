@@ -145,7 +145,6 @@ private struct PermissionStep: View {
 
 private struct SourcesStep: View {
     @EnvironmentObject private var coordinator: AppCoordinator
-    @State private var detected: [InstalledApps.Detected] = []
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
