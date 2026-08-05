@@ -3,7 +3,7 @@
 All notable changes to ThoughtMeter are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
-## [0.1.1] — unreleased
+## [0.1.1] — 2026-08-05
 
 ### Fixed
 - **v0.1.0 crashed at launch on every machine except the one that built it.**
