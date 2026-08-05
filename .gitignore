@@ -21,3 +21,6 @@ node_modules/
 
 # macOS
 .DS_Store
+
+# macOS temporary rename artifacts (appear during sips/Finder/hdiutil work)
+.!*!*

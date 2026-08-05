@@ -24,7 +24,7 @@ enum ReleaseConfig {
 
     static var repositoryURLString: String {
         (Bundle.main.object(forInfoDictionaryKey: "TMRepositoryURL") as? String)
-            ?? "github.com/jeongsikpark/thoughtmeter"
+            ?? "github.com/lucasjeongsikpark/thoughtmeter"
     }
 
     static var appVersion: String {

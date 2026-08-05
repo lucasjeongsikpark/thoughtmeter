@@ -49,7 +49,7 @@ Google Chrome itself cannot be added as an app — that would count typing on ev
 ### Homebrew (recommended)
 
 ```bash
-brew install --cask jeongsikpark/thoughtmeter/thoughtmeter
+brew install --cask lucasjeongsikpark/thoughtmeter/thoughtmeter
 ```
 
 ### Direct download
@@ -104,7 +104,7 @@ See [docs/UNINSTALL.md](docs/UNINSTALL.md), or run `scripts/uninstall.sh` from a
 No Xcode required — just Command Line Tools and node:
 
 ```bash
-git clone https://github.com/jeongsikpark/thoughtmeter.git
+git clone https://github.com/lucasjeongsikpark/thoughtmeter.git
 cd thoughtmeter
 make bootstrap   # checks dependencies
 make test        # Swift + extension tests

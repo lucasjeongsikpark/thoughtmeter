@@ -5,7 +5,7 @@
 ## Option A — Homebrew
 
 ```bash
-brew install --cask jeongsikpark/thoughtmeter/thoughtmeter
+brew install --cask lucasjeongsikpark/thoughtmeter/thoughtmeter
 ```
 
 Then start ThoughtMeter from Applications and jump to
@@ -14,7 +14,7 @@ Then start ThoughtMeter from Applications and jump to
 ## Option B — DMG
 
 1. Download `ThoughtMeter-x.y.z.dmg` from the
-   [releases page](https://github.com/jeongsikpark/thoughtmeter/releases).
+   [releases page](https://github.com/lucasjeongsikpark/thoughtmeter/releases).
 2. (Optional, recommended) Verify the checksum:
    ```bash
    shasum -a 256 -c SHA256SUMS.txt

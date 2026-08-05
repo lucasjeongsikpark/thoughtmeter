@@ -67,6 +67,6 @@ minute-bucket counts.
 
 ## Something else
 
-Open an issue: https://github.com/jeongsikpark/thoughtmeter/issues — include
+Open an issue: https://github.com/lucasjeongsikpark/thoughtmeter/issues — include
 macOS version, app version (Settings ▸ About), and what you observed.
 Never include personal data; ThoughtMeter has none to include.

@@ -7,7 +7,7 @@
 VERSION="0.1.0"
 
 # GitHub coordinates used in the Homebrew cask, About screen, and share card.
-REPO_OWNER="jeongsikpark"
+REPO_OWNER="lucasjeongsikpark"
 REPO_NAME="thoughtmeter"
 
 # macOS bundle identifier.
