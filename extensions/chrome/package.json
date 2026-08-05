@@ -1,6 +1,6 @@
 {
   "name": "thoughtmeter-connector",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "description": "Chrome extension connecting Chrome to the ThoughtMeter macOS app (hostname only, local only).",

@@ -34,7 +34,7 @@ fi
 
 ARCH="$(uname -m)"
 if [[ "$ARCH" != "arm64" ]]; then
-  echo "WARNING: this machine is $ARCH; v0.1.0 targets Apple Silicon (arm64) only." >&2
+  echo "WARNING: this machine is $ARCH; ThoughtMeter targets Apple Silicon (arm64) only." >&2
 fi
 
 if [[ $MISSING -gt 0 ]]; then

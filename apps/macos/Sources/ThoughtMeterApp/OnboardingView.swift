@@ -51,6 +51,11 @@ struct OnboardingView: View {
             .padding(16)
         }
         .frame(width: 620, height: 560)
+        // The permission step tells the user a forced quit-and-reopen (which
+        // macOS can require for Input Monitoring) resumes onboarding where
+        // they left off — persist the step so that promise holds.
+        .onAppear { step = min(max(coordinator.settings.onboardingStep, 0), totalSteps - 1) }
+        .onChange(of: step) { _, newValue in coordinator.settings.onboardingStep = newValue }
     }
 }
 

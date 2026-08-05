@@ -517,6 +517,7 @@ final class AppCoordinator: ObservableObject {
 
     func finishOnboarding() {
         settings.onboardingComplete = true
+        settings.onboardingStep = 0
         reloadSources()
         objectWillChange.send()
     }

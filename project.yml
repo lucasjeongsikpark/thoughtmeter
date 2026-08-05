@@ -10,7 +10,8 @@ options:
 settings:
   base:
     ARCHS: arm64
-    SWIFT_VERSION: "5.9"
+    # Swift language mode, not a toolchain version — Xcode rejects "5.9".
+    SWIFT_VERSION: "5.0"
     CODE_SIGN_IDENTITY: "-"
     CODE_SIGNING_REQUIRED: "NO"
 

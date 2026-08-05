@@ -39,6 +39,7 @@ struct DashboardView: View {
     @State private var stats = DashboardStats()
     @State private var shareStats = DashboardStats()
     @State private var shareSheetShown = false
+    @State private var shareAvailable = false
 
     /// Keep the charts live while the window is open (stops with the view).
     private let refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
@@ -47,7 +48,14 @@ struct DashboardView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
-                DashboardSections(stats: stats, range: range)
+                if let startupError = coordinator.startupError {
+                    // Nothing is being recorded in this state — telling the
+                    // user to "start typing" (the normal empty state) would
+                    // blame them for a storage failure. Match the popover.
+                    storageErrorState(startupError)
+                } else {
+                    DashboardSections(stats: stats, range: range)
+                }
             }
             .padding(24)
         }
@@ -97,7 +105,7 @@ struct DashboardView: View {
             } label: {
                 Label("Share Proof of Thought", systemImage: "square.and.arrow.up")
             }
-            .disabled(stats.isEmpty)
+            .disabled(!shareAvailable)
             .help("Share today's trace as an image")
 
             Button {
@@ -109,10 +117,37 @@ struct DashboardView: View {
         }
     }
 
+    private func storageErrorState(_ message: String) -> some View {
+        VStack(spacing: 10) {
+            Image(systemName: "externaldrive.badge.exclamationmark")
+                .font(.system(size: 36))
+                .foregroundStyle(.orange)
+            Text("Stopped — local database unavailable")
+                .font(.title3.weight(.medium))
+            Text(message)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 440)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 120)
+    }
+
     // MARK: - Data
 
     private func reload() {
         stats = loadStats(for: range)
+        // The card always renders TODAY's stats (see the share button), so
+        // the button's empty-guard must check today too — the selected range
+        // can have data while today is still zero.
+        shareAvailable = range == .today ? !stats.isEmpty : todayHasInput()
+    }
+
+    private func todayHasInput() -> Bool {
+        guard let store = coordinator.store else { return false }
+        let today = LocalDateProvider().localDateString(forUnixSeconds: Int64(Date().timeIntervalSince1970))
+        let rows = (try? store.totalsBySource(localDates: [today])) ?? []
+        return rows.contains { $0.keystrokes > 0 }
     }
 
     private func loadStats(for range: DashboardRange) -> DashboardStats {

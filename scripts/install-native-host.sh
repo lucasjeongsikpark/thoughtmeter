@@ -38,6 +38,15 @@ if [[ ! -x "$HOST_BINARY" ]]; then
   exit 1
 fi
 
+# Chrome treats allowed_origins as all-or-nothing: one malformed origin
+# invalidates the ENTIRE manifest, severing the store extension too. Same
+# gate the app applies in Settings (extension IDs are exactly 32 of a-p).
+if [[ -n "$DEV_ID" && ! "$DEV_ID" =~ ^[a-p]{32}$ ]]; then
+  echo "error: --dev-id '$DEV_ID' is not a valid Chrome extension ID (exactly 32 letters a-p)." >&2
+  echo "  Copy it from chrome://extensions (Developer mode on). Nothing was changed." >&2
+  exit 1
+fi
+
 ORIGINS=()
 if [[ "$CHROME_EXTENSION_ID_PROD" != "UNSET" && -n "$CHROME_EXTENSION_ID_PROD" ]]; then
   ORIGINS+=("chrome-extension://$CHROME_EXTENSION_ID_PROD/")

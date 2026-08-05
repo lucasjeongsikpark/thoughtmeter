@@ -12,9 +12,21 @@ const NATIVE_HOST = "org.thoughtmeter.chromehost";
 const KEEPALIVE_ALARM = "thoughtmeter-keepalive";
 
 let port = null;
+// True only after the host actually answered on the current port. A freshly
+// created port proves nothing: chrome.runtime.connectNative returns a port
+// even when the host is missing — the failure arrives asynchronously via
+// onDisconnect. Claiming "connected" at connect time made the popup report
+// a working chain that did not exist.
 let connected = false;
 let lastHost = null; // hostname (or null) we last sent
 let lastAck = null;  // last stateAck from the host: {tracked, trackedDomain}
+let statusWaiters = []; // getStatus resolvers awaiting proof either way
+
+function settleStatus() {
+  const waiters = statusWaiters;
+  statusWaiters = [];
+  for (const resolve of waiters) resolve();
+}
 
 function connect() {
   if (port) return port;
@@ -23,18 +35,21 @@ function connect() {
   } catch {
     connected = false;
     port = null;
+    settleStatus();
     return null;
   }
-  connected = true;
   port.onMessage.addListener((message) => {
     if (message && message.type === "stateAck") {
+      connected = true;
       lastAck = { tracked: !!message.tracked, trackedDomain: message.trackedDomain ?? null };
+      settleStatus();
     }
   });
   port.onDisconnect.addListener(() => {
     connected = false;
     lastAck = null;
     port = null;
+    settleStatus();
   });
   return port;
 }
@@ -47,6 +62,7 @@ function send(message) {
   } catch {
     connected = false;
     port = null;
+    settleStatus();
   }
 }
 
@@ -85,13 +101,23 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 chrome.runtime.onStartup.addListener(() => { refreshState(); });
 chrome.runtime.onInstalled.addListener(() => { refreshState(); });
 
+// How long getStatus waits for the host to prove itself (ack) or fail
+// (disconnect) before answering with the last known state. Local IPC
+// settles in milliseconds; the timeout only guards a wedged host.
+const STATUS_PROOF_TIMEOUT_MS = 700;
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message && message.type === "getStatus") {
     // The popup's query may be what woke a suspended worker, resetting the
-    // module state above. Refresh first so the answer reflects the reconnect
-    // this wakeup triggers — answering synchronously would report
-    // "Not connected" at exactly the diagnostic moment the popup exists for.
-    refreshState().then(() => {
+    // module state above. Refresh, then wait for the host's ack — or the
+    // onDisconnect that reveals a missing host — before answering.
+    // Answering right after the refresh would race Chrome's asynchronous
+    // failure delivery and always report "Connected".
+    const proof = new Promise((resolve) => {
+      statusWaiters.push(resolve);
+      setTimeout(resolve, STATUS_PROOF_TIMEOUT_MS);
+    });
+    refreshState().then(() => proof).then(() => {
       sendResponse({
         connected,
         host: lastHost,

@@ -39,6 +39,7 @@ public final class AppSettings {
         static let trackingMode = "trackingMode"
         static let menuBarDisplay = "menuBarDisplay"
         static let onboardingComplete = "onboardingComplete"
+        static let onboardingStep = "onboardingStep"
         static let pausedUntil = "pausedUntil" // unix seconds; -1 = indefinite; absent = active
     }
 
@@ -59,6 +60,14 @@ public final class AppSettings {
     public var onboardingComplete: Bool {
         get { defaults.bool(forKey: Keys.onboardingComplete) }
         set { defaults.set(newValue, forKey: Keys.onboardingComplete) }
+    }
+
+    /// Last onboarding step the user was on. Granting Input Monitoring can
+    /// require quitting and reopening the app mid-onboarding, and the
+    /// permission step promises the flow resumes where it left off.
+    public var onboardingStep: Int {
+        get { defaults.integer(forKey: Keys.onboardingStep) }
+        set { defaults.set(newValue, forKey: Keys.onboardingStep) }
     }
 
     // MARK: - Pause state

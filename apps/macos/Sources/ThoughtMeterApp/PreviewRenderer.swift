@@ -12,32 +12,41 @@ enum PreviewRenderer {
         guard let flagIndex = CommandLine.arguments.firstIndex(of: "--render-previews"),
               CommandLine.arguments.count > flagIndex + 1 else { return }
         let directory = URL(fileURLWithPath: CommandLine.arguments[flagIndex + 1], isDirectory: true)
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        } catch {
+            print("failed to create \(directory.path): \(error)")
+            exit(1)
+        }
 
         let stats = sampleStats()
-        render(
+        // A failed render/write must fail the run — printing success and
+        // exiting 0 would let a visual check "pass" against stale or
+        // missing images.
+        let renderedToday = render(
             DashboardSections(stats: stats, range: .today)
                 .frame(width: 720)
                 .padding(24)
                 .background(Color(nsColor: .windowBackgroundColor)),
             name: "dashboard-today.png", in: directory
         )
-        render(
-            DashboardSections(stats: stats, range: .week)
+        let renderedWeek = render(
+            DashboardSections(stats: sampleWeekStats(), range: .week)
                 .frame(width: 720)
                 .padding(24)
                 .background(Color(nsColor: .windowBackgroundColor)),
             name: "dashboard-week.png", in: directory
         )
-        render(
+        let renderedCard = render(
             ShareCardView(stats: stats, includeSources: true),
             name: "proof-of-thought.png", in: directory
         )
+        guard renderedToday && renderedWeek && renderedCard else { exit(1) }
         print("previews written to \(directory.path)")
         exit(0)
     }
 
-    private static func render<Content: View>(_ view: Content, name: String, in directory: URL) {
+    private static func render<Content: View>(_ view: Content, name: String, in directory: URL) -> Bool {
         let renderer = ImageRenderer(content: view)
         renderer.scale = 2.0
         guard let nsImage = renderer.nsImage,
@@ -46,10 +55,16 @@ enum PreviewRenderer {
               let png = bitmap.representation(using: .png, properties: [:])
         else {
             print("failed to render \(name)")
-            return
+            return false
         }
-        try? png.write(to: directory.appendingPathComponent(name))
+        do {
+            try png.write(to: directory.appendingPathComponent(name))
+        } catch {
+            print("failed to write \(name): \(error)")
+            return false
+        }
         print("rendered \(name)")
+        return true
     }
 
     /// A realistic day: quiet morning, working-hours ramp, evening tail.
@@ -87,6 +102,31 @@ enum PreviewRenderer {
             ("2026-08-01", 4_180), ("2026-08-02", 6_540), ("2026-08-03", 16_870),
             ("2026-08-04", stats.total),
         ]
+        return stats
+    }
+
+    /// The week render shows "Total (7 Days)", the daily average, and the
+    /// by-day chart from one stats object — so its total must equal the sum
+    /// of the daily bars (and the source split must sum to that same total),
+    /// or the preview depicts an impossible state.
+    private static func sampleWeekStats() -> DashboardStats {
+        var stats = sampleStats()
+        let weekTotal = stats.daily.reduce(0) { $0 + $1.keystrokes }
+        var scaled = stats.bySource.map {
+            (source: $0.source, keystrokes: $0.keystrokes * weekTotal / stats.total)
+        }
+        // Integer scaling loses a remainder; pin it on the top source so the
+        // breakdown still sums exactly to the total.
+        if let first = scaled.first {
+            let shortfall = weekTotal - scaled.reduce(0) { $0 + $1.keystrokes }
+            scaled[0] = (first.source, first.keystrokes + shortfall)
+        }
+        stats.bySource = scaled
+        stats.total = weekTotal
+        assert(stats.total == stats.daily.reduce(0) { $0 + $1.keystrokes },
+               "sample week total and daily sums must agree")
+        assert(stats.total == stats.bySource.reduce(0) { $0 + $1.keystrokes },
+               "sample week total and source sums must agree")
         return stats
     }
 }

@@ -57,6 +57,14 @@ let settingsTests: [TC] = [
             t.expectEqual(settings.menuBarDisplay, .iconRawCount)
         }
     },
+    TC("onboarding step defaults to the first step and round trips") { t in
+        withDefaults { defaults in
+            let settings = AppSettings(defaults: defaults)
+            t.expectEqual(settings.onboardingStep, 0, "fresh install starts at step 0")
+            settings.onboardingStep = 2
+            t.expectEqual(settings.onboardingStep, 2, "a quit-and-reopen must resume mid-flow")
+        }
+    },
 ]
 
 let formatterTests: [TC] = [

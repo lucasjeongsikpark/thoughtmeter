@@ -3,6 +3,47 @@
 All notable changes to ThoughtMeter are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
+## [Unreleased]
+
+The Chrome extension is bumped to 0.1.2 (its versioning is independent of
+the app's — see the first entry).
+
+### Fixed
+- The extension popup no longer claims "Connected" when the native host is
+  missing or unreachable. Chrome reports that failure asynchronously, so the
+  worker treated every freshly created port as connected — the popup, the
+  exact place the install docs send you to diagnose the chain, could never
+  say "Not connected". A connection now counts only once the host actually
+  replies, and the popup waits briefly for that proof (extension 0.1.2).
+- The dashboard's Share button now disables when **today** is empty. The
+  card always renders today's numbers, but the button checked the selected
+  range — with 7/30 Days selected and history present, it happily exported
+  a "Today's Thought Input — 0 keystrokes" card.
+- If the local database fails to open, the dashboard says so (matching the
+  menu bar popover) instead of advising you to "start typing in a selected
+  tool" — advice that cannot work while nothing is being recorded.
+- Onboarding resumes at the step you were on after a quit-and-reopen, which
+  its Input Monitoring step has promised all along (macOS can require a
+  relaunch mid-grant).
+- The menu bar popover reports a failed database open as "Stopped — local
+  database unavailable" plus the underlying error, instead of a misleading
+  "Input Monitoring needed".
+- A development extension ID must look like one (32 letters a–p) before it
+  reaches the native-messaging manifest — Chrome rejects the entire manifest
+  over one malformed entry, severing the store extension's connection too.
+  Enforced in Settings ▸ Chrome and now also in
+  `scripts/install-native-host.sh --dev-id`.
+- `scripts/verify-no-network.sh` fails closed: a missing or unreadable
+  binary fails the scan instead of passing every check vacuously.
+- `--render-previews` exits nonzero when a render or write fails instead of
+  printing success, and its 7-day sample is arithmetically consistent (the
+  "Total (7 Days)" card used to disagree with its own by-day chart).
+- Generated Xcode projects build again: `project.yml` set
+  `SWIFT_VERSION: 5.9`, which Xcode rejects (valid language modes are
+  4.0 / 4.2 / 5.0 / 6.0).
+- Download-verification commands in README and docs/INSTALL work when only
+  some release assets were downloaded (`--ignore-missing`).
+
 ## [0.1.2] — 2026-08-05
 
 Bug-fix release: every defect found in a full-repository audit.

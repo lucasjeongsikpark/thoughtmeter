@@ -59,10 +59,10 @@ enum IconCache {
 
 /// A small leading mark identifying a source.
 /// - Apps: the real app icon (dashed placeholder if no longer installed).
-/// - Domains: the companion desktop app's icon when installed (accurate
-///   brand mark read from the user's own machine), otherwise a colored
-///   monogram tile — the same idea as a browser's favicon fallback.
-///   Favicons are never fetched: ThoughtMeter makes no network requests.
+/// - Domains: the favicon bundled with the app for recognized services,
+///   else the companion desktop app's icon when installed, else a colored
+///   monogram tile. Favicons are bundled at development time and never
+///   fetched at runtime: ThoughtMeter makes no network requests.
 struct SourceIcon: View {
     let source: SourceRecord
     var size: CGFloat = 16

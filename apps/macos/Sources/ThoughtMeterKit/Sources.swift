@@ -124,10 +124,12 @@ public enum RecognizedCatalog {
         ("Midjourney", "midjourney.com"),
     ]
 
-    /// Domain → desktop-app sibling. Used only for UI: when the companion
-    /// app is installed, its icon identifies the domain (ThoughtMeter never
-    /// fetches favicons — the app makes no network requests — and bundling
-    /// third-party logos would be a trademark problem for an OSS repo).
+    /// Domain → desktop-app sibling. Used only for UI, as the middle step of
+    /// the domain icon chain (bundled favicon → companion app icon →
+    /// monogram): when a domain has no bundled favicon but its desktop app
+    /// is installed, that app's icon — read from the user's own machine —
+    /// identifies the domain. Favicons are bundled at development time,
+    /// never fetched at runtime: the app makes no network requests.
     public static let domainCompanionApps: [String: String] = [
         "chatgpt.com": "com.openai.chat",
         "claude.ai": "com.anthropic.claudefordesktop",
