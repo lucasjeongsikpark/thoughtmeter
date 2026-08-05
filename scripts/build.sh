@@ -59,11 +59,19 @@ plutil -lint "$APP/Contents/Info.plist" >/dev/null
 
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
-# Ad-hoc signature: no Apple Developer Program. This gives the bundle a
-# stable code identity on this machine but is NOT notarization — the docs
-# describe the unsigned-app first-launch experience honestly.
-echo "==> ad-hoc code signing"
-codesign --force --deep --sign - "$APP"
+# Code signing. Default is ad-hoc (no Apple Developer Program; NOT
+# notarization). Caveat: every ad-hoc re-sign produces a NEW code identity,
+# so macOS invalidates the Input Monitoring grant on each rebuild.
+# For development, set TM_SIGN_IDENTITY to a self-signed code-signing
+# certificate to keep a stable identity across rebuilds (see CONTRIBUTING.md
+# "The Input Monitoring dev loop").
+SIGN_IDENTITY="${TM_SIGN_IDENTITY:--}"
+if [[ "$SIGN_IDENTITY" == "-" ]]; then
+  echo "==> ad-hoc code signing (rebuilds reset the Input Monitoring grant)"
+else
+  echo "==> code signing with identity: $SIGN_IDENTITY"
+fi
+codesign --force --deep --sign "$SIGN_IDENTITY" "$APP"
 codesign --verify --deep "$APP"
 
 echo "==> built $APP ($CONFIG, $VERSION)"

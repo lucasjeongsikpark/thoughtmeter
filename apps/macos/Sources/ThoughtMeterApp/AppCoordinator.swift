@@ -28,6 +28,7 @@ final class AppCoordinator: ObservableObject {
     private let frontmost = FrontmostAppMonitor()
     private let eventSource = EventTapSource()
     private var flushTimer: Timer?
+    private var tapRetryTimer: Timer?
     private var lifecycleObservers: [NSObjectProtocol] = []
     private var started = false
 
@@ -39,7 +40,14 @@ final class AppCoordinator: ObservableObject {
     @Published private(set) var pauseState: AppSettings.PauseState = .active
     @Published private(set) var chromeConnected = false
     @Published private(set) var permissionGranted = false
+    /// True while the CGEventTap is actually delivering events. Can be false
+    /// even when macOS reports the permission granted (stale grant after an
+    /// update re-signed the binary) — the UI must reflect THIS, not just
+    /// permissionGranted, or the app looks active while counting nothing.
+    @Published private(set) var tapRunning = false
     @Published var startupError: String?
+
+    var trackingHealthy: Bool { permissionGranted && tapRunning }
 
     /// Set by PopoverView while open. Together with the menu bar count
     /// setting, this gates the periodic stats queries: when nothing on
@@ -55,7 +63,7 @@ final class AppCoordinator: ObservableObject {
     }
 
     var menuBarIconState: MenuBarIconState {
-        if !permissionGranted { return .noPermission }
+        if !trackingHealthy { return .noPermission }
         if isPaused { return .paused }
         if chromeRelevant && !chromeConnected { return .chromeDisconnected }
         return .active
@@ -138,6 +146,7 @@ final class AppCoordinator: ObservableObject {
         chromeReader.stop()
         frontmost.stop()
         flushTimer?.invalidate()
+        stopTapRetry()
         store?.close()
     }
 
@@ -167,6 +176,15 @@ final class AppCoordinator: ObservableObject {
         applyPauseState()
         recomputeActiveSource() // Chrome freshness can expire without an event
         refreshChromeStatus()
+        // Permission can be revoked (or invalidated by an update — ad-hoc
+        // re-signing resets the TCC grant) while running; notice within 30 s.
+        permission.recheck()
+        if permission.granted != permissionGranted { permissionGranted = permission.granted }
+        if !permission.granted && tapRunning {
+            eventSource.stop()
+            tapRunning = false
+            permission.startPollingIfNeeded() // restarts the tap on re-grant
+        }
         // Query the database only when something visible shows counts:
         // the menu bar count or an open popover. The dashboard queries the
         // store itself on open/refresh.
@@ -182,13 +200,40 @@ final class AppCoordinator: ObservableObject {
     }
 
     private func startEventTap() {
+        guard !tapRunning else { return }
+        tracker.resetModifierState()
         do {
-            tracker.resetModifierState()
             try eventSource.start()
+            tapRunning = true
+            stopTapRetry()
+            NSLog("ThoughtMeter: event tap started")
         } catch {
-            // Tap creation fails when permission is missing/revoked.
+            // Happens when the Input Monitoring grant is missing — or STALE:
+            // macOS can still report the permission as granted after the
+            // binary was re-signed (every rebuild of an ad-hoc app), while
+            // refusing the actual tap. Surface it and keep retrying.
+            tapRunning = false
+            NSLog("ThoughtMeter: event tap failed to start (Input Monitoring missing or stale): %@",
+                  String(describing: error))
             permission.startPollingIfNeeded()
+            scheduleTapRetry()
         }
+    }
+
+    private func scheduleTapRetry() {
+        guard tapRetryTimer == nil else { return }
+        tapRetryTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self, !self.tapRunning else { return }
+                self.permission.recheck()
+                if self.permission.granted { self.startEventTap() }
+            }
+        }
+    }
+
+    private func stopTapRetry() {
+        tapRetryTimer?.invalidate()
+        tapRetryTimer = nil
     }
 
     // MARK: - Sources

@@ -43,7 +43,6 @@ struct MenuBarLabel: View {
 
     var body: some View {
         Group {
-            // NSImage is cached per state inside MenuBarIconRenderer.
             if let text {
                 HStack(spacing: 3) {
                     Image(nsImage: MenuBarIconRenderer.image(for: iconState))

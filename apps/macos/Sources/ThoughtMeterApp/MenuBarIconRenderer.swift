@@ -20,7 +20,6 @@ enum MenuBarIconRenderer {
             let center = NSPoint(x: rect.midX, y: rect.midY - 2.5)
             let radius: CGFloat = 6.5
 
-            // Gauge arc: 200° sweep, open at the bottom.
             let arc = NSBezierPath()
             arc.appendArc(withCenter: center, radius: radius, startAngle: 190, endAngle: -10, clockwise: true)
             arc.lineWidth = 1.6
@@ -30,7 +29,6 @@ enum MenuBarIconRenderer {
 
             switch state {
             case .active, .chromeDisconnected, .noPermission:
-                // Needle pointing upper-right (an "in motion" gauge).
                 let angle: CGFloat = state == .noPermission ? 170 : 55
                 let radians = angle * .pi / 180
                 let tip = NSPoint(x: center.x + cos(radians) * (radius - 1.5),
@@ -42,7 +40,6 @@ enum MenuBarIconRenderer {
                 needle.lineCapStyle = .round
                 needle.stroke()
             case .paused:
-                // Two pause bars inside the gauge.
                 for xOffset in [-2.2, 1.0] {
                     let bar = NSBezierPath(
                         roundedRect: NSRect(x: center.x + xOffset, y: center.y - 0.5, width: 1.4, height: 5.5),
@@ -53,21 +50,18 @@ enum MenuBarIconRenderer {
                 }
             }
 
-            // Hub dot.
             let hub = NSBezierPath(ovalIn: NSRect(x: center.x - 1.4, y: center.y - 1.4, width: 2.8, height: 2.8))
             NSColor.black.setFill()
             hub.fill()
 
             switch state {
             case .noPermission:
-                // Exclamation badge, bottom right.
                 let stem = NSBezierPath(roundedRect: NSRect(x: rect.maxX - 3.4, y: 4.5, width: 1.6, height: 5),
                                         xRadius: 0.8, yRadius: 0.8)
                 stem.fill()
                 let dot = NSBezierPath(ovalIn: NSRect(x: rect.maxX - 3.4, y: 1.6, width: 1.6, height: 1.6))
                 dot.fill()
             case .chromeDisconnected:
-                // Hollow badge: something configured is not connected.
                 let badge = NSBezierPath(ovalIn: NSRect(x: rect.maxX - 5, y: 1.2, width: 4, height: 4))
                 badge.lineWidth = 1.1
                 badge.stroke()

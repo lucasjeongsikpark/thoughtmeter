@@ -8,10 +8,16 @@ dist/
 # Generated Xcode project (make generate)
 *.xcodeproj/
 
+# Icon intermediates — regenerate with `swift scripts/gen-icons.swift`;
+# only the compiled AppIcon.icns ships.
+apps/macos/Resources/AppIcon.iconset/
+
 # Node
 node_modules/
 
+# Local tooling state
+.claude/
+.vscode/
+
 # macOS
 .DS_Store
-
-# Generated iconset intermediates are committed; nothing else to ignore here.

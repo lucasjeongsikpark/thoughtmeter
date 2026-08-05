@@ -23,10 +23,16 @@ Check, in order:
 
 ## Input Monitoring was granted but macOS keeps asking after updates
 
-Unsigned builds can lose the permission when the binary changes. Toggle
-ThoughtMeter off/on in System Settings ▸ Privacy & Security ▸ Input
-Monitoring; if the toggle seems stuck, remove the entry (–) and re-add the
-app (+), then relaunch. Your data is unaffected.
+Unsigned builds lose the permission whenever the binary changes — macOS ties
+the grant to the code signature, and every update (or rebuild from source)
+re-signs the app. ThoughtMeter notices within seconds and shows
+"Input Monitoring lost — re-grant needed" in the popover with a shortcut
+button. Toggle ThoughtMeter off/on in System Settings ▸ Privacy & Security ▸
+Input Monitoring; if the toggle seems stuck, remove the entry (–) and re-add
+the app (+), then relaunch. Your data is unaffected.
+
+Building from source repeatedly? See CONTRIBUTING.md "The Input Monitoring
+dev loop" for a stable self-signed identity that survives rebuilds.
 
 ## The Chrome extension says "Not connected"
 

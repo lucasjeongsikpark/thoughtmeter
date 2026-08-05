@@ -48,6 +48,17 @@ struct PopoverView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 statusRow
+                if !coordinator.trackingHealthy {
+                    Button("Open Input Monitoring Settings") {
+                        coordinator.permission.request()
+                        PermissionMonitor.openSystemSettings()
+                    }
+                    .controlSize(.small)
+                    Text("If ThoughtMeter is already listed, toggle it off and on (updates can invalidate the grant), then return here.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if let current = coordinator.currentSourceName {
                     HStack(spacing: 5) {
                         Text("Current:").foregroundStyle(.secondary)
@@ -84,7 +95,7 @@ struct PopoverView: View {
         .onAppear {
             coordinator.popoverVisible = true
             coordinator.refreshNow()
-            SettingsOpener.register { openSettings() } // backup registration
+            SettingsOpener.register { openSettings() }
         }
         .onDisappear { coordinator.popoverVisible = false }
     }
@@ -99,6 +110,8 @@ struct PopoverView: View {
             Text("Tracking:").foregroundStyle(.secondary)
             if !coordinator.permissionGranted {
                 Text("Input Monitoring needed").foregroundStyle(.orange)
+            } else if !coordinator.tapRunning {
+                Text("Input Monitoring lost — re-grant needed").foregroundStyle(.orange)
             } else if coordinator.isPaused {
                 Text(coordinator.pauseDescription).foregroundStyle(.orange)
             } else if coordinator.chromeRelevant && !coordinator.chromeConnected {

@@ -35,7 +35,6 @@ function connect() {
     connected = false;
     lastAck = null;
     port = null;
-    // Reconnection happens lazily on the next event or keepalive tick.
   });
   return port;
 }
@@ -60,7 +59,6 @@ async function refreshState() {
       const [tab] = await chrome.tabs.query({ active: true, windowId: window.id });
       host = hostnameFromUrl(tab && tab.url);
     }
-    // No focused Chrome window → host stays null (fail closed).
   } catch {
     host = null;
   }
@@ -87,7 +85,6 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 chrome.runtime.onStartup.addListener(() => { refreshState(); });
 chrome.runtime.onInstalled.addListener(() => { refreshState(); });
 
-// Popup status requests.
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message && message.type === "getStatus") {
     sendResponse({

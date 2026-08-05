@@ -27,6 +27,24 @@ If you prefer Xcode, `make generate` produces a project via
 [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`project.yml`) — it is a
 convenience and is not exercised by CI.
 
+### The Input Monitoring dev loop
+
+macOS ties the Input Monitoring grant to the app's code signature, and every
+ad-hoc re-sign (the default) creates a new identity — so **each rebuild
+silently invalidates the permission** and counting stops until you toggle
+ThoughtMeter off and on in System Settings ▸ Privacy & Security ▸ Input
+Monitoring. The app detects this and shows a warning state, but for a
+pleasant dev loop, sign with a stable identity instead:
+
+1. Keychain Access → Certificate Assistant → Create a Certificate…
+   Name: `ThoughtMeter Dev`, Identity Type: Self-Signed Root,
+   Certificate Type: **Code Signing**.
+2. Build with it: `TM_SIGN_IDENTITY="ThoughtMeter Dev" make dev`
+3. Grant Input Monitoring once — it now survives rebuilds.
+
+Release artifacts stay ad-hoc signed (`make release` ignores your local
+identity unless you export `TM_SIGN_IDENTITY`).
+
 ### Why a custom test runner?
 
 Command Line Tools ship neither XCTest nor swift-testing, so tests run

@@ -1,4 +1,3 @@
-// Popup: read-only status view. Configuration lives in the macOS app.
 function dot(kind) {
   const span = document.createElement("span");
   span.className = `dot ${kind}`;

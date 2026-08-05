@@ -114,14 +114,16 @@ private struct PermissionStep: View {
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 10) {
-                Image(systemName: coordinator.permissionGranted ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
-                    .foregroundStyle(coordinator.permissionGranted ? .green : .orange)
-                Text(coordinator.permissionGranted ? "Granted" : "Not granted yet")
+                Image(systemName: coordinator.trackingHealthy ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                    .foregroundStyle(coordinator.trackingHealthy ? .green : .orange)
+                Text(coordinator.trackingHealthy ? "Granted and active"
+                     : coordinator.permissionGranted ? "Granted but not active — toggle ThoughtMeter off and on in System Settings"
+                     : "Not granted yet")
                     .font(.headline)
             }
             .padding(.vertical, 6)
 
-            if !coordinator.permissionGranted {
+            if !coordinator.trackingHealthy {
                 HStack(spacing: 10) {
                     Button("Open System Settings") {
                         coordinator.permission.request()

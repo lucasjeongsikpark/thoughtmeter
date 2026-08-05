@@ -57,7 +57,7 @@ try? DataPaths.ensureDirectories()
 
 while true {
     let chunk = stdinHandle.availableData
-    if chunk.isEmpty { shutdown() } // EOF
+    if chunk.isEmpty { shutdown() }
     buffer.append(chunk)
     guard let messages = NativeMessageFraming.drainMessages(from: &buffer) else {
         shutdown() // protocol violation; fail closed
