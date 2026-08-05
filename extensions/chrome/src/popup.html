@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: -apple-system, system-ui, sans-serif;
+      width: 280px;
+      margin: 0;
+      padding: 14px;
+      font-size: 13px;
+      color: #1d1d1f;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { color: #f5f5f7; background: #1e1e1e; }
+      .privacy { color: #98989d !important; }
+      .row .value { color: #f5f5f7; }
+    }
+    h1 { font-size: 14px; margin: 0 0 10px; }
+    .row { display: flex; justify-content: space-between; margin: 6px 0; }
+    .row .label { color: #6e6e73; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 4px; margin-right: 5px; }
+    .ok { background: #34c759; }
+    .off { background: #ff9500; }
+    .neutral { background: #98989d; }
+    .privacy {
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(128,128,128,0.25);
+      color: #6e6e73;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+  </style>
+</head>
+<body>
+  <h1>ThoughtMeter Connector</h1>
+  <div class="row"><span class="label">App connection</span><span class="value" id="connection">…</span></div>
+  <div class="row"><span class="label">Current site</span><span class="value" id="host">…</span></div>
+  <div class="row"><span class="label">Tracked</span><span class="value" id="tracked">…</span></div>
+  <p class="privacy">
+    This extension sends only the hostname of your active tab to the
+    ThoughtMeter app on this Mac. It never reads page content, never sees
+    what you type, and never contacts any server.
+  </p>
+  <script src="popup.js"></script>
+</body>
+</html>
