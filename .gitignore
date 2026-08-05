@@ -1,0 +1,17 @@
+# Build products
+.build/
+dist/
+
+# SwiftPM
+.swiftpm/
+
+# Generated Xcode project (make generate)
+*.xcodeproj/
+
+# Node
+node_modules/
+
+# macOS
+.DS_Store
+
+# Generated iconset intermediates are committed; nothing else to ignore here.

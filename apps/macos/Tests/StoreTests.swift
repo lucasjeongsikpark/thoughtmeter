@@ -1,0 +1,176 @@
+import Foundation
+import ThoughtMeterKit
+
+private func makeStore(in directory: URL) throws -> SQLiteStore {
+    try SQLiteStore(path: directory.appendingPathComponent("test.sqlite").path)
+}
+
+let storeTests: [TC] = [
+    TC("upsert source is idempotent and preserves enabled flag") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let descriptor = SourceDescriptor(kind: .app, identifier: "com.apple.Terminal",
+                                              displayName: "Terminal", isBuiltin: true)
+            let id1 = try store.upsertSource(descriptor, now: 100)
+            try store.setSourceEnabled(id: id1, enabled: false)
+            let id2 = try store.upsertSource(descriptor, now: 200)
+            t.expectEqual(id1, id2, "same identifier must reuse the row")
+            let sources = try store.listSources()
+            t.expectEqual(sources.count, 1)
+            t.expect(!(sources[0].isEnabled), "user's disable must survive re-upsert")
+        }
+    },
+    TC("activity upsert accumulates on duplicate bucket") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let id = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "a.b.c",
+                                                             displayName: "C", isBuiltin: false), now: 0)
+            let entry = SQLiteStore.ActivityEntry(bucketStart: 1200, sourceID: id, keystrokes: 5,
+                                                  localDate: "2026-08-04", tzOffsetSeconds: -25200)
+            try store.recordActivity([entry])
+            try store.recordActivity([entry]) // same bucket again
+            t.expectEqual(try store.totalKeystrokes(forLocalDate: "2026-08-04"), 10,
+                          "duplicate bucket rows must accumulate, not duplicate")
+        }
+    },
+    TC("totals by source and daily totals") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let vscode = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "com.microsoft.VSCode",
+                                                                 displayName: "VS Code", isBuiltin: true), now: 0)
+            let claude = try store.upsertSource(SourceDescriptor(kind: .domain, identifier: "claude.ai",
+                                                                 displayName: "Claude (web)", isBuiltin: true), now: 0)
+            try store.recordActivity([
+                .init(bucketStart: 60, sourceID: vscode, keystrokes: 100, localDate: "2026-08-03", tzOffsetSeconds: 0),
+                .init(bucketStart: 120, sourceID: claude, keystrokes: 40, localDate: "2026-08-03", tzOffsetSeconds: 0),
+                .init(bucketStart: 86_460, sourceID: vscode, keystrokes: 7, localDate: "2026-08-04", tzOffsetSeconds: 0),
+            ])
+            let bySource = try store.totalsBySource(localDates: ["2026-08-03", "2026-08-04"])
+            t.expectEqual(bySource.count, 2)
+            t.expectEqual(bySource.first?.source.identifier, "com.microsoft.VSCode", "ordered by total desc")
+            t.expectEqual(bySource.first?.keystrokes, 107)
+            let daily = try store.dailyTotals(localDates: ["2026-08-03", "2026-08-04"])
+            t.expectEqual(daily["2026-08-03"], 140)
+            t.expectEqual(daily["2026-08-04"], 7)
+        }
+    },
+    TC("hourly totals use stored tz offset") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let id = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "x.y.z",
+                                                             displayName: "X", isBuiltin: false), now: 0)
+            // bucket at 10:00 UTC with offset +2h → local hour 12
+            let tenUTC: Int64 = 86_400 * 100 + 10 * 3600
+            try store.recordActivity([
+                .init(bucketStart: tenUTC, sourceID: id, keystrokes: 3,
+                      localDate: "1970-04-11", tzOffsetSeconds: 7200)
+            ])
+            let hours = try store.hourlyTotals(forLocalDate: "1970-04-11")
+            t.expectEqual(hours[12], 3)
+            t.expectEqual(hours.reduce(0, +), 3)
+        }
+    },
+    TC("delete all activity keeps sources") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let id = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "a.b.c",
+                                                             displayName: "C", isBuiltin: false), now: 0)
+            try store.recordActivity([.init(bucketStart: 60, sourceID: id, keystrokes: 9,
+                                            localDate: "2026-08-04", tzOffsetSeconds: 0)])
+            try store.deleteAllActivity()
+            t.expectEqual(try store.totalKeystrokes(forLocalDate: "2026-08-04"), 0)
+            t.expectEqual(try store.listSources().count, 1, "source configuration preserved")
+        }
+    },
+    TC("deleting a source cascades its activity") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let id = try store.upsertSource(SourceDescriptor(kind: .domain, identifier: "example.com",
+                                                             displayName: "Example", isBuiltin: false), now: 0)
+            try store.recordActivity([.init(bucketStart: 60, sourceID: id, keystrokes: 4,
+                                            localDate: "2026-08-04", tzOffsetSeconds: 0)])
+            try store.deleteSource(id: id)
+            t.expectEqual(try store.totalKeystrokes(forLocalDate: "2026-08-04"), 0)
+        }
+    },
+    TC("data persists across store reopen (simulated restart/update)") { t in
+        try withTempDirectory { dir in
+            let path = dir.appendingPathComponent("persist.sqlite").path
+            do {
+                let store = try SQLiteStore(path: path)
+                let id = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "p.q.r",
+                                                                 displayName: "PQR", isBuiltin: false), now: 0)
+                try store.recordActivity([.init(bucketStart: 60, sourceID: id, keystrokes: 11,
+                                                localDate: "2026-08-04", tzOffsetSeconds: 0)])
+                store.close()
+            }
+            let reopened = try SQLiteStore(path: path)
+            t.expectEqual(try reopened.totalKeystrokes(forLocalDate: "2026-08-04"), 11)
+        }
+    },
+    TC("CSV export contains aggregate rows and header only") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let id = try store.upsertSource(SourceDescriptor(kind: .domain, identifier: "claude.ai",
+                                                             displayName: "Claude (web)", isBuiltin: true), now: 0)
+            try store.recordActivity([.init(bucketStart: 1_700_000_040, sourceID: id, keystrokes: 21,
+                                            localDate: "2023-11-14", tzOffsetSeconds: 0)])
+            let csv = try store.exportCSV()
+            let lines = csv.split(separator: "\n")
+            t.expectEqual(lines.count, 2, "header + one row")
+            t.expect(lines[0].hasPrefix("bucket_start_utc,local_date,local_hour,source_kind"), "header shape")
+            t.expect(lines[1].contains("claude.ai") && lines[1].contains(",21"), "row content")
+        }
+    },
+    TC("database file has owner-only permissions") { t in
+        try withTempDirectory { dir in
+            let path = dir.appendingPathComponent("perm.sqlite").path
+            _ = try SQLiteStore(path: path)
+            let attributes = try FileManager.default.attributesOfItem(atPath: path)
+            let permissions = (attributes[.posixPermissions] as? NSNumber)?.int16Value ?? 0
+            t.expectEqual(permissions & 0o777, 0o600)
+        }
+    },
+]
+
+let flusherTests: [TC] = [
+    TC("flush drains tracker into store with correct local date") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let id = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "f.g.h",
+                                                             displayName: "FGH", isBuiltin: false), now: 0)
+            // 2026-08-04 12:00:00 UTC
+            let noonUTC: Int64 = 1_785_844_800
+            let tracker = InputTracker(clock: { noonUTC })
+            tracker.setActiveSource(id)
+            tracker.handle(.keyDown(isAutoRepeat: false))
+            tracker.handle(.keyDown(isAutoRepeat: false))
+            let utc = LocalDateProvider(timeZone: TimeZone(identifier: "UTC")!)
+            let flusher = AggregationFlusher(tracker: tracker, store: store, localDateProvider: { utc })
+            try flusher.flush()
+            let expectedDate = utc.localDateString(forUnixSeconds: noonUTC)
+            t.expectEqual(try store.totalKeystrokes(forLocalDate: expectedDate), 2)
+            t.expect(tracker.drain().isEmpty, "tracker drained")
+        }
+    },
+    TC("midnight boundary splits across local dates (timezone aware)") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let id = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "m.n.o",
+                                                             displayName: "MNO", isBuiltin: false), now: 0)
+            // Tokyo (UTC+9): 2026-08-04 23:59:30 local = 14:59:30 UTC
+            let beforeMidnightUTC: Int64 = 1_785_855_570
+            var now = beforeMidnightUTC
+            let tracker = InputTracker(clock: { now })
+            tracker.setActiveSource(id)
+            tracker.handle(.keyDown(isAutoRepeat: false))
+            now += 60 // 00:00:30 local next day
+            tracker.handle(.keyDown(isAutoRepeat: false))
+            let tokyo = LocalDateProvider(timeZone: TimeZone(identifier: "Asia/Tokyo")!)
+            let flusher = AggregationFlusher(tracker: tracker, store: store, localDateProvider: { tokyo })
+            try flusher.flush()
+            t.expectEqual(try store.totalKeystrokes(forLocalDate: "2026-08-04"), 1)
+            t.expectEqual(try store.totalKeystrokes(forLocalDate: "2026-08-05"), 1)
+        }
+    },
+]

@@ -1,0 +1,82 @@
+import Foundation
+import ThoughtMeterKit
+
+private func makeDefaults() -> UserDefaults {
+    let name = "thoughtmeter-test-\(UUID().uuidString)"
+    let defaults = UserDefaults(suiteName: name)!
+    defaults.removePersistentDomain(forName: name)
+    return defaults
+}
+
+let settingsTests: [TC] = [
+    TC("defaults: selected-only mode, compact menu bar, onboarding incomplete") { t in
+        let settings = AppSettings(defaults: makeDefaults())
+        t.expectEqual(settings.trackingMode, .selectedOnly)
+        t.expectEqual(settings.menuBarDisplay, .iconCompactCount)
+        t.expect(!settings.onboardingComplete)
+        t.expectEqual(settings.pauseState(now: 100), .active)
+    },
+    TC("pause until a time expires on its own") { t in
+        let settings = AppSettings(defaults: makeDefaults())
+        settings.setPausedUntil(1000)
+        t.expectEqual(settings.pauseState(now: 500), .pausedUntil(1000))
+        t.expect(settings.isPaused(now: 500))
+        t.expectEqual(settings.pauseState(now: 1001), .active, "expired pause auto-resumes")
+    },
+    TC("indefinite pause persists until resume") { t in
+        let settings = AppSettings(defaults: makeDefaults())
+        settings.setPausedUntil(nil)
+        t.expectEqual(settings.pauseState(now: 1_000_000_000), .pausedIndefinitely)
+        settings.resume()
+        t.expectEqual(settings.pauseState(now: 1_000_000_000), .active)
+    },
+    TC("mode and display round trip") { t in
+        let settings = AppSettings(defaults: makeDefaults())
+        settings.trackingMode = .allRecognized
+        settings.menuBarDisplay = .iconRawCount
+        t.expectEqual(settings.trackingMode, .allRecognized)
+        t.expectEqual(settings.menuBarDisplay, .iconRawCount)
+    },
+]
+
+let formatterTests: [TC] = [
+    TC("compact formatting") { t in
+        t.expectEqual(HumanInputFormatter.compact(0), "0")
+        t.expectEqual(HumanInputFormatter.compact(982), "982")
+        t.expectEqual(HumanInputFormatter.compact(1000), "1K")
+        t.expectEqual(HumanInputFormatter.compact(12_438), "12.4K")
+        t.expectEqual(HumanInputFormatter.compact(999_949), "999.9K")
+        t.expectEqual(HumanInputFormatter.compact(2_400_000), "2.4M")
+    },
+    TC("exact formatting") { t in
+        t.expectEqual(HumanInputFormatter.exact(12_438), "12,438")
+        t.expectEqual(HumanInputFormatter.exact(0), "0")
+    },
+]
+
+let localDateTests: [TC] = [
+    TC("local date string respects timezone") { t in
+        let utc = LocalDateProvider(timeZone: TimeZone(identifier: "UTC")!)
+        let tokyo = LocalDateProvider(timeZone: TimeZone(identifier: "Asia/Tokyo")!)
+        // 2026-08-04 20:00 UTC = 2026-08-05 05:00 Tokyo
+        let evening: Int64 = 1_785_873_600
+        t.expectEqual(utc.localDateString(forUnixSeconds: evening), "2026-08-04")
+        t.expectEqual(tokyo.localDateString(forUnixSeconds: evening), "2026-08-05")
+    },
+    TC("recent local dates are consecutive and end today") { t in
+        let utc = LocalDateProvider(timeZone: TimeZone(identifier: "UTC")!)
+        let now: Int64 = 1_785_873_600 // 2026-08-04 UTC
+        let dates = utc.recentLocalDates(count: 7, now: now)
+        t.expectEqual(dates.count, 7)
+        t.expectEqual(dates.last, "2026-08-04")
+        t.expectEqual(dates.first, "2026-07-29")
+    },
+    TC("start of tomorrow is a local midnight after now") { t in
+        let utc = LocalDateProvider(timeZone: TimeZone(identifier: "UTC")!)
+        let now: Int64 = 1_785_873_600 // 2026-08-04 20:00 UTC
+        let tomorrow = utc.startOfTomorrow(now: now)
+        t.expect(tomorrow > now)
+        t.expectEqual(utc.localDateString(forUnixSeconds: tomorrow), "2026-08-05")
+        t.expectEqual(tomorrow % 86_400, 0, "UTC midnight is day aligned")
+    },
+]
