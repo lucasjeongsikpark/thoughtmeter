@@ -18,13 +18,36 @@ enum SettingsOpener {
     }
 
     static func open() {
-        NSApp.activate(ignoringOtherApps: true)
         if let registeredAction {
             registeredAction()
         } else {
             // Last-resort fallback if no scene view has appeared yet.
             NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         }
+        focusWindow()
+    }
+
+    /// SwiftUI creates the Settings window asynchronously, so activating before
+    /// it exists leaves an agent app's new window visible but NOT key: it
+    /// renders, the mouse works, and text fields silently ignore typing.
+    /// Activate once the window is actually there, retrying briefly.
+    private static func focusWindow(attempt: Int = 0) {
+        NSApp.activate(ignoringOtherApps: true)
+        if let window = settingsWindow {
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+        guard attempt < 20 else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            focusWindow(attempt: attempt + 1)
+        }
+    }
+
+    /// SwiftUI names the Settings window's frame autosave slot
+    /// `com_apple_SwiftUI_Settings_window` (observed in this app's own
+    /// preferences), which identifies it without relying on a localized title.
+    private static var settingsWindow: NSWindow? {
+        NSApp.windows.first { $0.frameAutosaveName.contains("Settings") }
     }
 }
 

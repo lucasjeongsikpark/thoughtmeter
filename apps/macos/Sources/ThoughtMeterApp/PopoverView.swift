@@ -77,8 +77,7 @@ struct PopoverView: View {
                 pauseMenu
 
                 Button("Settings") {
-                    NSApp.activate(ignoringOtherApps: true)
-                    openSettings()
+                    SettingsOpener.open()
                 }
                 .controlSize(.small)
 
