@@ -77,7 +77,7 @@ the AI tools and workspaces you choose. Counts, never content.
 |---|---|
 | ThoughtMeter-$VERSION.dmg | Recommended install |
 | ThoughtMeter-$VERSION.zip | Alternative archive |
-| thoughtmeter-extension-$VERSION.zip | Chrome Web Store upload package |
+| thoughtmeter-extension-$EXT_VERSION.zip | Chrome Web Store upload package |
 | SHA256SUMS.txt | Checksums |
 
 Verify a download: \`shasum -a 256 -c SHA256SUMS.txt\`
@@ -95,7 +95,7 @@ cat <<EOF
       dist/ThoughtMeter-$VERSION.zip
       dist/SHA256SUMS.txt
  5. Copy dist/thoughtmeter.rb → homebrew tap repo Casks/thoughtmeter.rb
- 6. Upload dist/thoughtmeter-extension-$VERSION.zip to the Chrome Web Store
+ 6. Upload dist/thoughtmeter-extension-$EXT_VERSION.zip to the Chrome Web Store
  7. After the store assigns/keeps the extension ID, confirm
     CHROME_EXTENSION_ID_PROD in packaging/release-config.sh matches
  8. Clean-machine test per docs/INSTALL.md — including the update path:

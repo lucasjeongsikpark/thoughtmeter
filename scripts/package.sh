@@ -13,7 +13,7 @@ APP="$ROOT/dist/ThoughtMeter.app"
 DIST="$ROOT/dist"
 DMG="$DIST/ThoughtMeter-$VERSION.dmg"
 ZIP="$DIST/ThoughtMeter-$VERSION.zip"
-EXT_ZIP="$DIST/thoughtmeter-extension-$VERSION.zip"
+EXT_ZIP="$DIST/thoughtmeter-extension-$EXT_VERSION.zip"
 
 echo "==> DMG"
 STAGING="$(mktemp -d)"
