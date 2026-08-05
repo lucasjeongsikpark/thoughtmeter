@@ -7,7 +7,9 @@ cask "thoughtmeter" do
   desc "Local-first menu bar app that counts keystrokes inside the AI tools you choose"
   homepage "https://github.com/__OWNER__/__REPO__"
 
-  depends_on macos: ">= :sonoma"
+  # Symbol form, not ">= :sonoma": Homebrew 6 deprecated the string comparison.
+  # Both report "macOS >= 14" — verified with brew info, not assumed.
+  depends_on macos: :sonoma
   depends_on arch: :arm64
 
   app "ThoughtMeter.app"
@@ -27,7 +29,9 @@ cask "thoughtmeter" do
     or approve it in System Settings → Privacy & Security.
 
     ThoughtMeter needs the Input Monitoring permission to count keystrokes.
-    After updates you may need to re-enable it in
+    You grant it once: releases are signed with a stable certificate, so the
+    permission carries over to later versions. If counting ever stops after an
+    update, the app says so and links to
     System Settings → Privacy & Security → Input Monitoring.
   EOS
 end

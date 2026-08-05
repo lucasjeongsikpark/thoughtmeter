@@ -8,6 +8,18 @@
 brew install --cask lucasjeongsikpark/thoughtmeter/thoughtmeter
 ```
 
+Homebrew 6.0 and later refuse to load casks from third-party taps until you
+trust them, so you may see `Refusing to load cask … from untrusted tap`. That
+is Homebrew asking you to confirm you meant to install from outside the
+official repositories. To proceed:
+
+```bash
+brew trust lucasjeongsikpark/thoughtmeter
+```
+
+then run the install again. (`brew untrust` reverses it. On Homebrew 5 and
+earlier there is no `brew trust` command and none of this applies.)
+
 Then start ThoughtMeter from Applications and jump to
 [First launch](#first-launch) below.
 

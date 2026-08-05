@@ -52,6 +52,8 @@ Google Chrome itself cannot be added as an app — that would count typing on ev
 brew install --cask lucasjeongsikpark/thoughtmeter/thoughtmeter
 ```
 
+Homebrew 6.0+ refuses casks from third-party taps until you trust them. If you see `Refusing to load cask … from untrusted tap`, run `brew trust lucasjeongsikpark/thoughtmeter` and install again — details in [docs/INSTALL.md](docs/INSTALL.md).
+
 ### Direct download
 
 1. Download `ThoughtMeter-x.y.z.dmg` from [Releases](../../releases), and optionally verify it against `SHA256SUMS.txt` (`shasum -a 256 -c SHA256SUMS.txt`).
