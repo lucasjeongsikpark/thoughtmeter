@@ -53,6 +53,11 @@ public enum CountFormatter {
             return String(count)
         case ..<1_000_000:
             let value = Double(count) / 1000.0
+            // 999,950–999,999 round to 1000.0 — promote the unit instead of
+            // showing "1000K".
+            if (value * 10).rounded() / 10 >= 1000 {
+                return trimmed(Double(count) / 1_000_000.0) + "M"
+            }
             return trimmed(value) + "K"
         default:
             let value = Double(count) / 1_000_000.0

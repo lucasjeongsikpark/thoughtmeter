@@ -122,6 +122,24 @@ let storeTests: [TC] = [
             t.expect(lines[1].contains("claude.ai") && lines[1].contains(",21"), "row content")
         }
     },
+    TC("activity for a deleted source is skipped, not failed") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let kept = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "kept.app",
+                                                               displayName: "Kept", isBuiltin: false), now: 0)
+            let doomed = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "doomed.app",
+                                                                 displayName: "Doomed", isBuiltin: false), now: 0)
+            try store.deleteSource(id: doomed)
+            // A keystroke can land between a source's deletion and the
+            // resolver recomputing — it must not poison the whole batch.
+            try store.recordActivity([
+                .init(bucketStart: 60, sourceID: kept, keystrokes: 3, localDate: "2026-08-05", tzOffsetSeconds: 0),
+                .init(bucketStart: 60, sourceID: doomed, keystrokes: 9, localDate: "2026-08-05", tzOffsetSeconds: 0),
+            ])
+            t.expectEqual(try store.totalKeystrokes(forLocalDate: "2026-08-05"), 3,
+                          "kept source persists; deleted source is dropped")
+        }
+    },
     TC("database file has owner-only permissions") { t in
         try withTempDirectory { dir in
             let path = dir.appendingPathComponent("perm.sqlite").path
@@ -171,6 +189,26 @@ let flusherTests: [TC] = [
             try flusher.flush()
             t.expectEqual(try store.totalKeystrokes(forLocalDate: "2026-08-04"), 1)
             t.expectEqual(try store.totalKeystrokes(forLocalDate: "2026-08-05"), 1)
+        }
+    },
+    TC("failed flush re-queues counts for the next cycle") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let id = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "r.q.s",
+                                                             displayName: "RQS", isBuiltin: false), now: 0)
+            let tracker = InputTracker(clock: { 1_785_844_800 })
+            tracker.setActiveSource(id)
+            tracker.handle(.keyDown(isAutoRepeat: false))
+            tracker.handle(.keyDown(isAutoRepeat: false))
+            let utc = LocalDateProvider(timeZone: TimeZone(identifier: "UTC")!)
+            let flusher = AggregationFlusher(tracker: tracker, store: store, localDateProvider: { utc })
+            store.close() // force the write to fail
+            do {
+                try flusher.flush()
+                t.fail("flush against a closed store must throw")
+            } catch {}
+            t.expectEqual(tracker.drain().values.reduce(0, +), 2,
+                          "a failed flush must merge counts back, not drop them")
         }
     },
 ]

@@ -68,6 +68,16 @@ public final class InputTracker {
         return drained
     }
 
+    /// Merge drained counts back after a failed flush. Merging (not replacing)
+    /// keeps keystrokes recorded while the failed write was in flight.
+    public func requeue(_ counts: [BucketKey: Int]) {
+        lock.lock()
+        defer { lock.unlock() }
+        for (key, count) in counts {
+            pending[key, default: 0] += count
+        }
+    }
+
     /// Pending (not yet flushed) totals per source, for live UI display.
     public func pendingTotalsBySource() -> [Int64: Int] {
         lock.lock()

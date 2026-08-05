@@ -110,4 +110,13 @@ let inputTrackerTests: [TC] = [
         t.expectEqual(tracker.drain().values.reduce(0, +), 1)
         t.expect(tracker.drain().isEmpty, "second drain is empty")
     },
+    TC("requeue merges failed-flush counts with new keystrokes") { t in
+        let tracker = InputTracker(clock: { 1_700_000_000 })
+        tracker.setActiveSource(1)
+        tracker.handle(.keyDown(isAutoRepeat: false))
+        let drained = tracker.drain()
+        tracker.handle(.keyDown(isAutoRepeat: false)) // typed while the write was failing
+        tracker.requeue(drained)
+        t.expectEqual(tracker.drain().values.reduce(0, +), 2, "requeue must merge, not replace")
+    },
 ]

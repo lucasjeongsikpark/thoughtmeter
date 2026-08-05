@@ -21,9 +21,9 @@ public final class AggregationFlusher {
     }
 
     /// Persist all pending counts in one transaction.
-    /// On failure, drained counts are re-queued conceptually by rethrowing —
-    /// callers log and retry on the next cycle; a crash loses at most the
-    /// pending window (bounded, documented).
+    /// On failure, drained counts are merged back into the tracker so the
+    /// next cycle retries them; a crash loses at most the pending window
+    /// (bounded, documented).
     public func flush() throws {
         let drained = tracker.drain()
         guard !drained.isEmpty else { return }
@@ -37,6 +37,11 @@ public final class AggregationFlusher {
                 tzOffsetSeconds: provider.tzOffsetSeconds(forUnixSeconds: key.minuteStart)
             )
         }
-        try store.recordActivity(entries)
+        do {
+            try store.recordActivity(entries)
+        } catch {
+            tracker.requeue(drained)
+            throw error
+        }
     }
 }

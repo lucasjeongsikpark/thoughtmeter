@@ -1,41 +1,61 @@
 import Foundation
 import ThoughtMeterKit
 
-private func makeDefaults() -> UserDefaults {
+/// Each test gets a throwaway UserDefaults suite whose persistent domain is
+/// removed afterward — the setters write a real plist into
+/// ~/Library/Preferences, and without the cleanup every run leaks one file
+/// per test forever.
+private func withDefaults(_ body: (UserDefaults) throws -> Void) rethrows {
     let name = "thoughtmeter-test-\(UUID().uuidString)"
     let defaults = UserDefaults(suiteName: name)!
-    defaults.removePersistentDomain(forName: name)
-    return defaults
+    defer {
+        defaults.removePersistentDomain(forName: name)
+        defaults.synchronize()
+        // cfprefsd leaves an empty plist behind even after the domain is
+        // removed — unlink it so runs leave no trace.
+        let plist = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Preferences/\(name).plist")
+        try? FileManager.default.removeItem(at: plist)
+    }
+    try body(defaults)
 }
 
 let settingsTests: [TC] = [
     TC("defaults: selected-only mode, compact menu bar, onboarding incomplete") { t in
-        let settings = AppSettings(defaults: makeDefaults())
-        t.expectEqual(settings.trackingMode, .selectedOnly)
-        t.expectEqual(settings.menuBarDisplay, .iconCompactCount)
-        t.expect(!settings.onboardingComplete)
-        t.expectEqual(settings.pauseState(now: 100), .active)
+        withDefaults { defaults in
+            let settings = AppSettings(defaults: defaults)
+            t.expectEqual(settings.trackingMode, .selectedOnly)
+            t.expectEqual(settings.menuBarDisplay, .iconCompactCount)
+            t.expect(!settings.onboardingComplete)
+            t.expectEqual(settings.pauseState(now: 100), .active)
+        }
     },
     TC("pause until a time expires on its own") { t in
-        let settings = AppSettings(defaults: makeDefaults())
-        settings.setPausedUntil(1000)
-        t.expectEqual(settings.pauseState(now: 500), .pausedUntil(1000))
-        t.expect(settings.isPaused(now: 500))
-        t.expectEqual(settings.pauseState(now: 1001), .active, "expired pause auto-resumes")
+        withDefaults { defaults in
+            let settings = AppSettings(defaults: defaults)
+            settings.setPausedUntil(1000)
+            t.expectEqual(settings.pauseState(now: 500), .pausedUntil(1000))
+            t.expect(settings.isPaused(now: 500))
+            t.expectEqual(settings.pauseState(now: 1001), .active, "expired pause auto-resumes")
+        }
     },
     TC("indefinite pause persists until resume") { t in
-        let settings = AppSettings(defaults: makeDefaults())
-        settings.setPausedUntil(nil)
-        t.expectEqual(settings.pauseState(now: 1_000_000_000), .pausedIndefinitely)
-        settings.resume()
-        t.expectEqual(settings.pauseState(now: 1_000_000_000), .active)
+        withDefaults { defaults in
+            let settings = AppSettings(defaults: defaults)
+            settings.setPausedUntil(nil)
+            t.expectEqual(settings.pauseState(now: 1_000_000_000), .pausedIndefinitely)
+            settings.resume()
+            t.expectEqual(settings.pauseState(now: 1_000_000_000), .active)
+        }
     },
     TC("mode and display round trip") { t in
-        let settings = AppSettings(defaults: makeDefaults())
-        settings.trackingMode = .allRecognized
-        settings.menuBarDisplay = .iconRawCount
-        t.expectEqual(settings.trackingMode, .allRecognized)
-        t.expectEqual(settings.menuBarDisplay, .iconRawCount)
+        withDefaults { defaults in
+            let settings = AppSettings(defaults: defaults)
+            settings.trackingMode = .allRecognized
+            settings.menuBarDisplay = .iconRawCount
+            t.expectEqual(settings.trackingMode, .allRecognized)
+            t.expectEqual(settings.menuBarDisplay, .iconRawCount)
+        }
     },
 ]
 
@@ -46,6 +66,8 @@ let formatterTests: [TC] = [
         t.expectEqual(CountFormatter.compact(1000), "1K")
         t.expectEqual(CountFormatter.compact(12_438), "12.4K")
         t.expectEqual(CountFormatter.compact(999_949), "999.9K")
+        t.expectEqual(CountFormatter.compact(999_950), "1M", "rounding past the K range promotes the unit, never \"1000K\"")
+        t.expectEqual(CountFormatter.compact(999_999), "1M")
         t.expectEqual(CountFormatter.compact(2_400_000), "2.4M")
     },
     TC("exact formatting") { t in

@@ -156,7 +156,7 @@ public final class SQLiteStore {
             let statement = try prepareLocked(sql)
             defer { sqlite3_finalize(statement) }
             var records: [SourceRecord] = []
-            while sqlite3_step(statement) == SQLITE_ROW {
+            try stepRowsLocked(statement) {
                 if let record = readSourceRow(statement) { records.append(record) }
             }
             return records
@@ -191,6 +191,12 @@ public final class SQLiteStore {
 
     /// Batched, transactional upsert. Duplicate (bucket, source) rows are
     /// accumulated, never duplicated.
+    ///
+    /// Entries whose source no longer exists are skipped, not failed: a
+    /// keystroke can land between a source's deletion and the resolver
+    /// recomputing, and its history is cascade-deleted anyway — failing the
+    /// whole batch (and every retry of it) over such an entry would wedge
+    /// flushing permanently.
     public func recordActivity(_ entries: [ActivityEntry]) throws {
         guard !entries.isEmpty else { return }
         try queue.sync {
@@ -198,7 +204,8 @@ public final class SQLiteStore {
             do {
                 let sql = """
                 INSERT INTO activity(bucket_utc_start, local_date, tz_offset_seconds, source_id, keystrokes)
-                VALUES(?,?,?,?,?)
+                SELECT ?,?,?,?,?
+                WHERE EXISTS(SELECT 1 FROM sources WHERE id = ?4)
                 ON CONFLICT(bucket_utc_start, source_id)
                 DO UPDATE SET keystrokes = keystrokes + excluded.keystrokes
                 """
@@ -249,7 +256,7 @@ public final class SQLiteStore {
             defer { sqlite3_finalize(statement) }
             bindText(statement, 1, date)
             var hours = [Int](repeating: 0, count: 24)
-            while sqlite3_step(statement) == SQLITE_ROW {
+            try stepRowsLocked(statement) {
                 let hour = Int(sqlite3_column_int64(statement, 0))
                 if (0..<24).contains(hour) {
                     hours[hour] = Int(sqlite3_column_int64(statement, 1))
@@ -276,7 +283,7 @@ public final class SQLiteStore {
                 bindText(statement, Int32(index + 1), date)
             }
             var results: [(SourceRecord, Int)] = []
-            while sqlite3_step(statement) == SQLITE_ROW {
+            try stepRowsLocked(statement) {
                 if let record = readSourceRow(statement) {
                     results.append((record, Int(sqlite3_column_int64(statement, 7))))
                 }
@@ -296,7 +303,7 @@ public final class SQLiteStore {
                 bindText(statement, Int32(index + 1), date)
             }
             var totals: [String: Int] = [:]
-            while sqlite3_step(statement) == SQLITE_ROW {
+            try stepRowsLocked(statement) {
                 if let cString = sqlite3_column_text(statement, 0) {
                     totals[String(cString: cString)] = Int(sqlite3_column_int64(statement, 1))
                 }
@@ -329,7 +336,7 @@ public final class SQLiteStore {
             defer { sqlite3_finalize(statement) }
             var csv = "bucket_start_utc,local_date,local_hour,source_kind,source_identifier,source_name,keystrokes\n"
             let iso = ISO8601DateFormatter()
-            while sqlite3_step(statement) == SQLITE_ROW {
+            try stepRowsLocked(statement) {
                 let bucket = sqlite3_column_int64(statement, 0)
                 let date = sqlite3_column_text(statement, 1).map { String(cString: $0) } ?? ""
                 let hour = sqlite3_column_int64(statement, 2)
@@ -387,6 +394,21 @@ public final class SQLiteStore {
             throw StoreError.sqlError(lastMessageLocked())
         }
         return prepared
+    }
+
+    /// Step through all result rows, then verify the scan finished cleanly.
+    /// sqlite3_step reports mid-scan I/O errors through its return code;
+    /// treating anything != SQLITE_ROW as end-of-rows would silently
+    /// truncate results (worst case: an incomplete CSV backup).
+    private func stepRowsLocked(_ statement: OpaquePointer, _ row: () -> Void) throws {
+        var result = sqlite3_step(statement)
+        while result == SQLITE_ROW {
+            row()
+            result = sqlite3_step(statement)
+        }
+        guard result == SQLITE_DONE else {
+            throw StoreError.sqlError(lastMessageLocked())
+        }
     }
 
     private func lastMessageLocked() -> String {

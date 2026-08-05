@@ -15,8 +15,10 @@ public enum DomainNormalizer {
     public static func normalize(_ raw: String) -> String? {
         var s = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
-        // Strip scheme ("https://claude.ai/chat" is accepted as user input).
-        if let schemeRange = s.range(of: "://") {
+        // Strip a LEADING scheme only ("https://claude.ai/chat" is accepted
+        // as user input). "://" later in the string is not a scheme —
+        // "example.com/login?next=https://evil.com" must parse as example.com.
+        if let schemeRange = s.range(of: "^[a-z][a-z0-9+.-]*://", options: .regularExpression) {
             s = String(s[schemeRange.upperBound...])
         }
         // Strip path / query / fragment.

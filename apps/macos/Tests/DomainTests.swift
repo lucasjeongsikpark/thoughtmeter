@@ -16,6 +16,10 @@ let domainTests: [TC] = [
         t.expectEqual(DomainNormalizer.normalize("http://www.chatgpt.com/"), "chatgpt.com")
         t.expectEqual(DomainNormalizer.normalize("https://claude.ai:443/chat"), "claude.ai")
     },
+    TC("URL embedded in a path/query is not mistaken for the scheme") { t in
+        t.expectEqual(DomainNormalizer.normalize("example.com/login?next=https://evil.com"), "example.com")
+        t.expectEqual(DomainNormalizer.normalize("example.com?u=https://x.test"), "example.com")
+    },
     TC("rejects invalid hostnames") { t in
         t.expectNil(DomainNormalizer.normalize(""))
         t.expectNil(DomainNormalizer.normalize("   "))
