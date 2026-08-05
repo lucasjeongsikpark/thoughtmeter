@@ -33,6 +33,15 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN_DIR/ThoughtMeter" "$APP/Contents/MacOS/ThoughtMeter"
 cp "$BIN_DIR/thoughtmeter-native-host" "$APP/Contents/MacOS/thoughtmeter-native-host"
 
+# SPM resource bundle (bundled domain icons). Bundle.module finds it in
+# Contents/Resources of the assembled app.
+if [[ -d "$BIN_DIR/ThoughtMeter_ThoughtMeter.bundle" ]]; then
+  cp -R "$BIN_DIR/ThoughtMeter_ThoughtMeter.bundle" "$APP/Contents/Resources/"
+else
+  echo "error: SPM resource bundle missing (expected $BIN_DIR/ThoughtMeter_ThoughtMeter.bundle)" >&2
+  exit 1
+fi
+
 if [[ ! -f "$ROOT/apps/macos/Resources/AppIcon.icns" ]]; then
   echo "==> generating app icon"
   (cd "$ROOT" && swift scripts/gen-icons.swift >/dev/null)

@@ -22,9 +22,9 @@ First public release.
   Wrtn, CLOVA X, v0, Lovable, Bolt, Replit, Midjourney, AI Studio, NotebookLM)
   plus custom domains. Hostname-only; fail-closed staleness.
 - Source icons throughout (popover, dashboard, settings) and an icon +
-  labeled-bar source breakdown on the dashboard. Domains show the companion
-  desktop app's icon when installed, otherwise a stable colored monogram
-  (favicons are never fetched — no network requests).
+  labeled-bar source breakdown on the dashboard. Recognized domains show
+  their real service favicon (bundled at build time — the app never fetches
+  anything at runtime; see NOTICE); custom domains get a stable monogram.
 - "Proof of Thought": today's trace exported locally as a 1200×630 PNG.
 - Dashboard: Today / 7 Days / 30 Days, hourly chart, per-source breakdown,
   7-day trend, empty states.

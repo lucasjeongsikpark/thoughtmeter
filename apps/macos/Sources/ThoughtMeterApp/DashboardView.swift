@@ -30,34 +30,23 @@ struct DashboardStats {
     var isEmpty: Bool { total == 0 }
 }
 
+/// Stateful wrapper: header, data loading, live refresh, share sheet.
+/// The visual content lives in DashboardSections so it can also be rendered
+/// offscreen (see PreviewRenderer).
 struct DashboardView: View {
     @EnvironmentObject private var coordinator: AppCoordinator
     @State private var range: DashboardRange = .today
     @State private var stats = DashboardStats()
     @State private var shareSheetShown = false
 
-    /// One calm hue for all marks: identity lives in labels, not color.
-    private let barStyle = Color.accentColor
+    /// Keep the charts live while the window is open (stops with the view).
+    private let refreshTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 header
-
-                if stats.isEmpty {
-                    emptyState
-                } else {
-                    summaryCards
-                    if range == .today {
-                        hourlyChart
-                    } else {
-                        dailyChart
-                    }
-                    sourceBreakdown
-                    if range == .today {
-                        weekTrend
-                    }
-                }
+                DashboardSections(stats: stats, range: range)
             }
             .padding(24)
         }
@@ -65,6 +54,7 @@ struct DashboardView: View {
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear { reload() }
         .onChange(of: range) { _, _ in reload() }
+        .onReceive(refreshTimer) { _ in reload() }
         .sheet(isPresented: $shareSheetShown) {
             ShareCardSheet(stats: stats)
                 .environmentObject(coordinator)
@@ -112,6 +102,70 @@ struct DashboardView: View {
                 Image(systemName: "gearshape")
             }
             .help("Settings")
+        }
+    }
+
+    // MARK: - Data
+
+    private func reload() {
+        guard let store = coordinator.store else { return }
+        // Everything typed in the last flush interval is still in memory —
+        // persist it first so the charts are current to the second.
+        coordinator.flushNow()
+        var next = DashboardStats()
+        let provider = LocalDateProvider()
+        let now = Int64(Date().timeIntervalSince1970)
+        let dates = provider.recentLocalDates(count: range.dayCount, now: now)
+        let today = provider.localDateString(forUnixSeconds: now)
+
+        next.bySource = (try? store.totalsBySource(localDates: dates)) ?? []
+        next.total = next.bySource.reduce(0) { $0 + $1.keystrokes }
+
+        if range == .today {
+            next.hourly = (try? store.hourlyTotals(forLocalDate: today)) ?? next.hourly
+            if let maxCount = next.hourly.max(), maxCount > 0 {
+                next.peakHour = next.hourly.firstIndex(of: maxCount)
+            }
+            // Trend + comparison need the previous week regardless of range.
+            let trendDates = provider.recentLocalDates(count: 7, now: now)
+            let daily = (try? store.dailyTotals(localDates: trendDates)) ?? [:]
+            next.daily = trendDates.map { ($0, daily[$0] ?? 0) }
+            let previous = trendDates.dropLast()
+            if !previous.isEmpty {
+                let sum = previous.reduce(0) { $0 + (daily[$1] ?? 0) }
+                let nonZeroDays = previous.filter { (daily[$0] ?? 0) > 0 }.count
+                next.sevenDayAverage = nonZeroDays > 0 ? sum / nonZeroDays : nil
+            }
+        } else {
+            let daily = (try? store.dailyTotals(localDates: dates)) ?? [:]
+            next.daily = dates.map { ($0, daily[$0] ?? 0) }
+        }
+        stats = next
+    }
+}
+
+/// The dashboard's visual content, purely a function of (stats, range).
+struct DashboardSections: View {
+    let stats: DashboardStats
+    let range: DashboardRange
+
+    /// One calm hue for all marks: identity lives in labels, not color.
+    private let barStyle = Color.accentColor
+
+    var body: some View {
+        if stats.isEmpty {
+            emptyState
+        } else {
+            summaryCards
+            if range == .today {
+                hourlyChart
+            } else {
+                dailyChart
+            }
+            sourceBreakdown
+            if range == .today {
+                weekTrend
+            }
         }
     }
 
@@ -179,15 +233,19 @@ struct DashboardView: View {
 
     private var hourlyChart: some View {
         ChartCard(title: "By hour") {
+            // Numeric x-axis: bar width must be fixed — .ratio()/.inset()
+            // resolve against a categorical step that a numeric axis lacks,
+            // producing invisible or hairline bars.
             Chart(Array(stats.hourly.enumerated()), id: \.offset) { hour, count in
                 BarMark(
                     x: .value("Hour", hour),
                     y: .value("Keystrokes", count),
-                    width: .ratio(0.62)
+                    width: .fixed(16)
                 )
                 .foregroundStyle(barStyle)
                 .cornerRadius(3)
             }
+            .chartXScale(domain: -1...24)
             .chartXAxis {
                 AxisMarks(values: [0, 6, 12, 18, 23]) { value in
                     AxisValueLabel {
@@ -291,41 +349,6 @@ struct DashboardView: View {
             }
             .frame(height: 140)
         }
-    }
-
-    // MARK: - Data
-
-    private func reload() {
-        guard let store = coordinator.store else { return }
-        var next = DashboardStats()
-        let provider = LocalDateProvider()
-        let now = Int64(Date().timeIntervalSince1970)
-        let dates = provider.recentLocalDates(count: range.dayCount, now: now)
-        let today = provider.localDateString(forUnixSeconds: now)
-
-        next.bySource = (try? store.totalsBySource(localDates: dates)) ?? []
-        next.total = next.bySource.reduce(0) { $0 + $1.keystrokes }
-
-        if range == .today {
-            next.hourly = (try? store.hourlyTotals(forLocalDate: today)) ?? next.hourly
-            if let maxCount = next.hourly.max(), maxCount > 0 {
-                next.peakHour = next.hourly.firstIndex(of: maxCount)
-            }
-            // Trend + comparison need the previous week regardless of range.
-            let trendDates = provider.recentLocalDates(count: 7, now: now)
-            let daily = (try? store.dailyTotals(localDates: trendDates)) ?? [:]
-            next.daily = trendDates.map { ($0, daily[$0] ?? 0) }
-            let previous = trendDates.dropLast()
-            if !previous.isEmpty {
-                let sum = previous.reduce(0) { $0 + (daily[$1] ?? 0) }
-                let nonZeroDays = previous.filter { (daily[$0] ?? 0) > 0 }.count
-                next.sevenDayAverage = nonZeroDays > 0 ? sum / nonZeroDays : nil
-            }
-        } else {
-            let daily = (try? store.dailyTotals(localDates: dates)) ?? [:]
-            next.daily = dates.map { ($0, daily[$0] ?? 0) }
-        }
-        stats = next
     }
 
     // MARK: - Labels

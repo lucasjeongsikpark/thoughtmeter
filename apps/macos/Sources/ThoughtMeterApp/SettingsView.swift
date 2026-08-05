@@ -138,50 +138,89 @@ private struct ChromeSettings: View {
             Section("Status") {
                 LabeledContent("Extension", value: coordinator.chromeStateDescription)
                 LabeledContent("Connector manifest", value: NativeHostInstaller.isInstalled ? "Registered" : "Not registered")
+                if NativeHostInstaller.isInstalled {
+                    let origins = NativeHostInstaller.installedOrigins()
+                    LabeledContent("Allowed extension IDs",
+                                   value: origins.isEmpty ? "none" : origins.map(shortOrigin).joined(separator: ", "))
+                }
+                Button("Refresh Status") { coordinator.refreshNow() }
+            }
+
+            Section("Set up") {
+                VStack(alignment: .leading, spacing: 8) {
+                    setupStep(1, "In Chrome, open a new tab and go to  chrome://extensions , then turn on “Developer mode” (top right).")
+                    setupStep(2, "Click “Load unpacked” and choose the  extensions/chrome  folder inside the ThoughtMeter repository.")
+                    setupStep(3, "Copy the ID shown on the ThoughtMeter Connector card, paste it below, and click “Save ID & Register”.")
+                    setupStep(4, "Quit Chrome completely (⌘Q) and reopen it — Chrome reads the connector registration at launch.")
+                }
+                .padding(.vertical, 2)
                 HStack {
-                    Button("Register Connector") { runInstall() }
-                    Button("Re-register") { runInstall() }
-                        .disabled(!NativeHostInstaller.isInstalled)
-                    Button("Refresh Status") { coordinator.refreshNow() }
+                    TextField("Extension ID from chrome://extensions", text: $devExtensionID)
+                        .onSubmit { saveDevID() }
+                    Button("Save ID & Register") { saveDevID() }
+                        .disabled(devExtensionID.trimmingCharacters(in: .whitespaces).isEmpty
+                                  && ReleaseConfig.productionExtensionID == nil)
                 }
-            }
-            Section("Tracked domains") {
-                let domains = coordinator.sources.filter { $0.kind == .domain && $0.isEnabled }
-                if domains.isEmpty {
-                    Text("No domains selected. Add them in the Tracking tab.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(domains) { source in
-                        Text(source.identifier)
-                    }
-                }
-            }
-            Section("Development") {
-                TextField("Unpacked extension ID (dev only)", text: $devExtensionID)
-                    .onSubmit { saveDevID() }
-                Button("Save ID & Re-register") { saveDevID() }
-                Text("For store installs this is not needed — release builds carry the production extension ID. Find an unpacked extension's ID at chrome://extensions with Developer mode on.")
+                Text("Once ThoughtMeter Connector is on the Chrome Web Store, installing it from there needs no ID — release builds know the store extension automatically.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            Section("Tracked domains") {
+                let domains = coordinator.sources.filter { $0.kind == .domain && $0.isEnabled }
+                if domains.isEmpty {
+                    Text("No domains selected yet. Enable them in the Tracking tab — without the extension they simply don't count.")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(domains) { source in
+                        HStack(spacing: 8) {
+                            SourceIcon(source: source, size: 16)
+                            Text(source.identifier)
+                        }
+                    }
+                }
+            }
+
             Section("Troubleshooting") {
-                Text("If the status stays disconnected: 1) make sure the connector is registered, 2) reload the extension at chrome://extensions, 3) restart Chrome. The extension only works while the ThoughtMeter app is installed at the same location as when the connector was registered — re-register after moving the app.")
+                Text("Still “not connected”? In order: 1) confirm the connector manifest is registered above, 2) confirm the extension ID above matches chrome://extensions exactly, 3) reload the extension, 4) quit and reopen Chrome. If you moved or rebuilt ThoughtMeter.app, register again — the manifest points at the app's location on disk.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
+
             if let statusMessage {
-                Text(statusMessage)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                Section {
+                    Text(statusMessage)
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
             }
         }
         .formStyle(.grouped)
     }
 
+    private func setupStep(_ number: Int, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Text("\(number).")
+                .font(.callout.monospacedDigit())
+                .foregroundStyle(.secondary)
+            Text(text)
+                .font(.callout)
+                .textSelection(.enabled)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private func shortOrigin(_ origin: String) -> String {
+        origin
+            .replacingOccurrences(of: "chrome-extension://", with: "")
+            .replacingOccurrences(of: "/", with: "")
+    }
+
     private func runInstall() {
         do {
             try NativeHostInstaller.install()
-            statusMessage = "Connector registered at \(NativeHostInstaller.manifestURL.path)"
+            statusMessage = "Connector registered. Next: reload the extension at chrome://extensions, then quit and reopen Chrome (⌘Q)."
         } catch {
             statusMessage = String(describing: error)
         }

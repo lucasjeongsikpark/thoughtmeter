@@ -1,0 +1,15 @@
+ThoughtMeter — third-party marks notice
+
+The small service icons bundled in
+apps/macos/Sources/ThoughtMeterApp/Resources/DomainIcons/ are the favicons
+of the corresponding websites. They are trademarks or brand assets of their
+respective owners and are included solely to visually identify those
+services inside ThoughtMeter's source list (nominative use), exactly as a
+web browser displays a site's favicon next to its name.
+
+Their inclusion implies no affiliation with, sponsorship by, or endorsement
+from any of these companies. ThoughtMeter is an independent open-source
+project.
+
+If you are a rights holder and want an icon removed or replaced, open an
+issue on the repository and it will be handled promptly.

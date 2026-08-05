@@ -1,0 +1,64 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ThoughtMeter}",
+            "name": "Debug thoughtmeter-tests",
+            "target": "thoughtmeter-tests",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug thoughtmeter-tests"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ThoughtMeter}",
+            "name": "Release thoughtmeter-tests",
+            "target": "thoughtmeter-tests",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release thoughtmeter-tests"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ThoughtMeter}",
+            "name": "Debug thoughtmeter-native-host",
+            "target": "thoughtmeter-native-host",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug thoughtmeter-native-host"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ThoughtMeter}",
+            "name": "Release thoughtmeter-native-host",
+            "target": "thoughtmeter-native-host",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release thoughtmeter-native-host"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ThoughtMeter}",
+            "name": "Debug ThoughtMeter",
+            "target": "ThoughtMeter",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug ThoughtMeter"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:ThoughtMeter}",
+            "name": "Release ThoughtMeter",
+            "target": "ThoughtMeter",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release ThoughtMeter"
+        }
+    ]
+}

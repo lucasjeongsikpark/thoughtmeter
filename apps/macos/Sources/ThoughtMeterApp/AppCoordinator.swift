@@ -378,6 +378,13 @@ final class AppCoordinator: ObservableObject {
         tick()
     }
 
+    /// Flush pending in-memory counts into the store so on-demand queries
+    /// (the dashboard) see everything typed up to this second — without
+    /// this, up to one flush interval of input is invisible to queries.
+    func flushNow() {
+        flushQuietly()
+    }
+
     private func refreshChromeStatus() {
         let now = Int64(Date().timeIntervalSince1970)
         chromeConnected = chromeReader.currentState?.isFresh(now: now) ?? false

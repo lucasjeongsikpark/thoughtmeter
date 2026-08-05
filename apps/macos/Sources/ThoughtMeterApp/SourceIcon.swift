@@ -8,6 +8,7 @@ import ThoughtMeterKit
 @MainActor
 enum IconCache {
     private static var appIcons: [String: NSImage?] = [:]
+    private static var domainFavicons: [String: NSImage] = [:]
 
     static func appIcon(forBundleID bundleID: String) -> NSImage? {
         if let cached = appIcons[bundleID] { return cached }
@@ -19,6 +20,17 @@ enum IconCache {
         }
         appIcons[bundleID] = icon
         return icon
+    }
+
+    /// Bundled favicon for a recognized domain (downloaded at development
+    /// time into Resources/DomainIcons — the app never fetches at runtime).
+    static func bundledDomainIcon(forDomain domain: String) -> NSImage? {
+        if let cached = domainFavicons[domain] { return cached }
+        guard let url = Bundle.module.url(forResource: domain, withExtension: "png",
+                                          subdirectory: "DomainIcons"),
+              let image = NSImage(contentsOf: url) else { return nil }
+        domainFavicons[domain] = image
+        return image
     }
 }
 
@@ -48,8 +60,16 @@ struct SourceIcon: View {
                         .padding(1)
                 }
             case .domain:
-                if let companionID = RecognizedCatalog.domainCompanionApps[source.identifier],
-                   let icon = IconCache.appIcon(forBundleID: companionID) {
+                // Real logo preference: the bundled service favicon, then the
+                // companion desktop app's icon, then a monogram tile
+                // (custom domains the catalog doesn't know about).
+                if let favicon = IconCache.bundledDomainIcon(forDomain: source.identifier) {
+                    Image(nsImage: favicon)
+                        .resizable()
+                        .interpolation(.high)
+                        .clipShape(RoundedRectangle(cornerRadius: size * 0.24))
+                } else if let companionID = RecognizedCatalog.domainCompanionApps[source.identifier],
+                          let icon = IconCache.appIcon(forBundleID: companionID) {
                     Image(nsImage: icon)
                         .resizable()
                         .interpolation(.high)

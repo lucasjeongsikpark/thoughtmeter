@@ -108,7 +108,8 @@ Issues and PRs are very welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for t
 
 ## License
 
-[MIT](LICENSE).
+[MIT](LICENSE). Bundled service favicons are trademarks of their respective
+owners, used solely to identify those services — see [NOTICE](NOTICE).
 
 ---
 

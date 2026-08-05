@@ -8,6 +8,11 @@ struct ThoughtMeterApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @ObservedObject private var coordinator = AppCoordinator.shared
 
+    init() {
+        // Dev-only: `--render-previews <dir>` renders UI to PNGs and exits.
+        PreviewRenderer.runIfRequested()
+    }
+
     var body: some Scene {
         MenuBarExtra {
             PopoverView()

@@ -13,10 +13,13 @@ let package = Package(
             path: "apps/macos/Sources/ThoughtMeterKit"
         ),
         // The menu bar application (SwiftUI + AppKit glue).
+        // DomainIcons: recognized services' favicons, bundled at build time
+        // (the app never fetches anything at runtime). See NOTICE.
         .executableTarget(
             name: "ThoughtMeter",
             dependencies: ["ThoughtMeterKit"],
-            path: "apps/macos/Sources/ThoughtMeterApp"
+            path: "apps/macos/Sources/ThoughtMeterApp",
+            resources: [.copy("Resources/DomainIcons")]
         ),
         // Chrome Native Messaging protocol + host decision logic.
         .target(

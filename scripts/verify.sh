@@ -20,9 +20,13 @@ for path in \
   "Contents/MacOS/ThoughtMeter" \
   "Contents/MacOS/thoughtmeter-native-host" \
   "Contents/Resources/AppIcon.icns" \
+  "Contents/Resources/ThoughtMeter_ThoughtMeter.bundle" \
   "Contents/PkgInfo"; do
   [[ -e "$APP/$path" ]] || fail "missing $path"
 done
+
+icon_count=$(find "$APP/Contents/Resources/ThoughtMeter_ThoughtMeter.bundle" -name '*.png' 2>/dev/null | wc -l | tr -d ' ')
+[[ "$icon_count" -ge 20 ]] || fail "bundled domain icons missing (found $icon_count)"
 
 echo "==> architecture (arm64 only)"
 for binary in ThoughtMeter thoughtmeter-native-host; do
