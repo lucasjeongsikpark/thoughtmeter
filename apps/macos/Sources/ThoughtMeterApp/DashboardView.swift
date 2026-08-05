@@ -37,6 +37,7 @@ struct DashboardView: View {
     @EnvironmentObject private var coordinator: AppCoordinator
     @State private var range: DashboardRange = .today
     @State private var stats = DashboardStats()
+    @State private var shareStats = DashboardStats()
     @State private var shareSheetShown = false
 
     /// Keep the charts live while the window is open (stops with the view).
@@ -56,7 +57,7 @@ struct DashboardView: View {
         .onChange(of: range) { _, _ in reload() }
         .onReceive(refreshTimer) { _ in reload() }
         .sheet(isPresented: $shareSheetShown) {
-            ShareCardSheet(stats: stats)
+            ShareCardSheet(stats: shareStats)
                 .environmentObject(coordinator)
         }
     }
@@ -89,6 +90,9 @@ struct DashboardView: View {
             .help("Refresh")
 
             Button {
+                // The card's headline is "Today's Thought Input", so it must
+                // always render today's stats — not the selected range's.
+                shareStats = range == .today ? stats : loadStats(for: .today)
                 shareSheetShown = true
             } label: {
                 Label("Share Proof of Thought", systemImage: "square.and.arrow.up")
@@ -108,7 +112,11 @@ struct DashboardView: View {
     // MARK: - Data
 
     private func reload() {
-        guard let store = coordinator.store else { return }
+        stats = loadStats(for: range)
+    }
+
+    private func loadStats(for range: DashboardRange) -> DashboardStats {
+        guard let store = coordinator.store else { return DashboardStats() }
         // Everything typed in the last flush interval is still in memory —
         // persist it first so the charts are current to the second.
         coordinator.flushNow()
@@ -126,11 +134,14 @@ struct DashboardView: View {
             if let maxCount = next.hourly.max(), maxCount > 0 {
                 next.peakHour = next.hourly.firstIndex(of: maxCount)
             }
-            // Trend + comparison need the previous week regardless of range.
-            let trendDates = provider.recentLocalDates(count: 7, now: now)
-            let daily = (try? store.dailyTotals(localDates: trendDates)) ?? [:]
+            // Trend + comparison need recent history regardless of range.
+            // The comparison window is the 7 days ending YESTERDAY, so fetch
+            // 8 dates (7 prior days + today) and split.
+            let historyDates = provider.recentLocalDates(count: 8, now: now)
+            let daily = (try? store.dailyTotals(localDates: historyDates)) ?? [:]
+            let trendDates = Array(historyDates.dropFirst())
             next.daily = trendDates.map { ($0, daily[$0] ?? 0) }
-            let previous = trendDates.dropLast()
+            let previous = historyDates.dropLast()
             if !previous.isEmpty {
                 let sum = previous.reduce(0) { $0 + (daily[$1] ?? 0) }
                 let nonZeroDays = previous.filter { (daily[$0] ?? 0) > 0 }.count
@@ -140,7 +151,7 @@ struct DashboardView: View {
             let daily = (try? store.dailyTotals(localDates: dates)) ?? [:]
             next.daily = dates.map { ($0, daily[$0] ?? 0) }
         }
-        stats = next
+        return next
     }
 }
 

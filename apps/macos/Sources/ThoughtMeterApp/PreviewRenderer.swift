@@ -55,10 +55,13 @@ enum PreviewRenderer {
     /// A realistic day: quiet morning, working-hours ramp, evening tail.
     private static func sampleStats() -> DashboardStats {
         var stats = DashboardStats()
+        // Must sum to the same total as the sources below — the real app
+        // derives total from the source sum, so a preview where the two
+        // disagree depicts an impossible state.
         stats.hourly = [
             0, 0, 0, 0, 0, 0, 0, 120,
-            980, 1740, 2210, 1830, 640, 1420, 2540, 2310,
-            1680, 1150, 420, 260, 510, 180, 0, 0,
+            980, 1740, 2210, 1830, 640, 1420, 2140, 2010,
+            1530, 1150, 420, 260, 510, 180, 0, 0,
         ]
         let sources: [(SourceRecord, Int)] = [
             (SourceRecord(id: 1, kind: .app, identifier: "com.microsoft.VSCode",
@@ -75,7 +78,8 @@ enum PreviewRenderer {
                           displayName: "internal.mycompany.dev", isBuiltin: false, isEnabled: true, createdAt: 0), 350),
         ]
         stats.bySource = sources
-        stats.total = stats.hourly.reduce(0, +)
+        stats.total = sources.reduce(0) { $0 + $1.1 }
+        assert(stats.total == stats.hourly.reduce(0, +), "sample hourly and source sums must agree")
         stats.peakHour = stats.hourly.firstIndex(of: stats.hourly.max() ?? 0)
         stats.sevenDayAverage = 14_120
         stats.daily = [

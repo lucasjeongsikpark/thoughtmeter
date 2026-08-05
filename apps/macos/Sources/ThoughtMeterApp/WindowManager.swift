@@ -61,6 +61,7 @@ final class WindowManager {
     static let shared = WindowManager()
 
     private var windows: [String: NSWindow] = [:]
+    private var closeObservers: [String: NSObjectProtocol] = [:]
 
     func showDashboard() {
         show(
@@ -108,11 +109,21 @@ final class WindowManager {
         window.center()
         windows[id] = window
 
-        NotificationCenter.default.addObserver(
+        // Block-based observers are NOT auto-removed on deallocation — keep
+        // the token and unregister on close, or every open/close cycle leaks
+        // an observer for the life of this long-running agent app.
+        let token = NotificationCenter.default.addObserver(
             forName: NSWindow.willCloseNotification, object: window, queue: .main
         ) { [weak self] _ in
-            Task { @MainActor in self?.windows.removeValue(forKey: id) }
+            Task { @MainActor in
+                guard let self else { return }
+                self.windows.removeValue(forKey: id)
+                if let token = self.closeObservers.removeValue(forKey: id) {
+                    NotificationCenter.default.removeObserver(token)
+                }
+            }
         }
+        closeObservers[id] = token
 
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)

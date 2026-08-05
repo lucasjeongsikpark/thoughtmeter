@@ -59,8 +59,17 @@ struct ShareCardSheet: View {
         panel.title = "Save Proof of Thought"
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url else { return }
-        try? png.write(to: url)
-        dismiss()
+        do {
+            try png.write(to: url)
+            dismiss()
+        } catch {
+            // Keep the sheet open so the user can pick another destination.
+            let alert = NSAlert()
+            alert.messageText = "ThoughtMeter"
+            alert.informativeText = "Could not save the image: \(error.localizedDescription)"
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
     }
 }
 
