@@ -2,13 +2,29 @@ import AppKit
 import SwiftUI
 
 /// Opens the app's Settings scene from contexts outside the MenuBarExtra
-/// environment (e.g. the dashboard's NSWindow, where the SwiftUI
-/// `openSettings` action is unavailable).
+/// environment (e.g. the dashboard's NSWindow).
+///
+/// SwiftUI's `openSettings` environment action is the only reliable way to
+/// open a Settings scene on modern macOS (the legacy `showSettingsWindow:`
+/// responder action no longer reaches SwiftUI settings). Views that live
+/// inside the scene (menu bar label, popover) register the action here so
+/// plain NSWindows can reuse it.
 @MainActor
 enum SettingsOpener {
+    private static var registeredAction: (() -> Void)?
+
+    static func register(_ action: @escaping () -> Void) {
+        registeredAction = action
+    }
+
     static func open() {
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        if let registeredAction {
+            registeredAction()
+        } else {
+            // Last-resort fallback if no scene view has appeared yet.
+            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        }
     }
 }
 

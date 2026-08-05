@@ -104,7 +104,7 @@ private struct DataSettings: View {
                     .foregroundStyle(.secondary)
             }
             Section("Retention") {
-                Text("ThoughtMeter keeps your Human Input history until you delete it. Nothing expires automatically, and nothing ever leaves this Mac.")
+                Text("ThoughtMeter keeps your Thought Input history until you delete it. Nothing expires automatically, and nothing ever leaves this Mac.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                 Button("Delete All ThoughtMeter Data…", role: .destructive) {
@@ -114,7 +114,7 @@ private struct DataSettings: View {
         }
         .formStyle(.grouped)
         .confirmationDialog(
-            "Delete all recorded Human Input?",
+            "Delete all recorded Thought Input?",
             isPresented: $deleteConfirmationShown,
             titleVisibility: .visible
         ) {

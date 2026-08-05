@@ -74,7 +74,7 @@ struct DashboardView: View {
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Human Input")
+                Text("Thought Input")
                     .font(.title.weight(.semibold))
                 Text("Keystrokes inside the tools you chose to track")
                     .font(.callout)
@@ -98,9 +98,13 @@ struct DashboardView: View {
             }
             .help("Refresh")
 
-            Button("Proof of Thought") { shareSheetShown = true }
-                .disabled(stats.isEmpty)
-                .help("Export today's trace as an image")
+            Button {
+                shareSheetShown = true
+            } label: {
+                Label("Share Proof of Thought", systemImage: "square.and.arrow.up")
+            }
+            .disabled(stats.isEmpty)
+            .help("Share today's trace as an image")
 
             Button {
                 SettingsOpener.open()
@@ -118,7 +122,7 @@ struct DashboardView: View {
                 .foregroundStyle(.secondary)
             Text("Nothing here yet")
                 .font(.title3.weight(.medium))
-            Text("Start typing in a selected tool to see your Human Input here.")
+            Text("Start typing in a selected tool to see your Thought Input here.")
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
@@ -130,20 +134,20 @@ struct DashboardView: View {
     private var summaryCards: some View {
         HStack(spacing: 12) {
             StatCard(
-                title: range == .today ? "Today’s Human Input" : "Total (\(range.rawValue))",
-                value: HumanInputFormatter.exact(stats.total),
+                title: range == .today ? "Today’s Thought Input" : "Total (\(range.rawValue))",
+                value: CountFormatter.exact(stats.total),
                 detail: "keystrokes"
             )
             if range == .today, let average = stats.sevenDayAverage, average > 0 {
                 StatCard(
                     title: "vs 7-day average",
                     value: comparisonText(average: average),
-                    detail: "avg \(HumanInputFormatter.compact(average))"
+                    detail: "avg \(CountFormatter.compact(average))"
                 )
             } else if range != .today {
                 StatCard(
                     title: "Daily average",
-                    value: HumanInputFormatter.compact(stats.total / max(range.dayCount, 1)),
+                    value: CountFormatter.compact(stats.total / max(range.dayCount, 1)),
                     detail: "keystrokes / day"
                 )
             }
@@ -151,14 +155,14 @@ struct DashboardView: View {
                 StatCard(
                     title: "Top source",
                     value: top.source.displayName,
-                    detail: HumanInputFormatter.compact(top.keystrokes) + " keystrokes"
+                    detail: CountFormatter.compact(top.keystrokes) + " keystrokes"
                 )
             }
             if range == .today, let peak = stats.peakHour {
                 StatCard(
                     title: "Peak hour",
                     value: hourLabel(peak),
-                    detail: HumanInputFormatter.compact(stats.hourly[peak]) + " keystrokes"
+                    detail: CountFormatter.compact(stats.hourly[peak]) + " keystrokes"
                 )
             }
         }
@@ -247,7 +251,7 @@ struct DashboardView: View {
                             }
                         }
                         .frame(height: 7)
-                        Text(HumanInputFormatter.exact(entry.keystrokes))
+                        Text(CountFormatter.exact(entry.keystrokes))
                             .font(.callout.monospacedDigit())
                             .foregroundStyle(.secondary)
                             .frame(width: 76, alignment: .trailing)
@@ -258,7 +262,7 @@ struct DashboardView: View {
                     HStack {
                         Text("+ \(remaining.count) more")
                         Spacer()
-                        Text(HumanInputFormatter.exact(remaining.reduce(0) { $0 + $1.keystrokes }))
+                        Text(CountFormatter.exact(remaining.reduce(0) { $0 + $1.keystrokes }))
                             .monospacedDigit()
                     }
                     .font(.caption)

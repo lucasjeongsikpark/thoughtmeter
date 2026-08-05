@@ -41,16 +41,16 @@ let settingsTests: [TC] = [
 
 let formatterTests: [TC] = [
     TC("compact formatting") { t in
-        t.expectEqual(HumanInputFormatter.compact(0), "0")
-        t.expectEqual(HumanInputFormatter.compact(982), "982")
-        t.expectEqual(HumanInputFormatter.compact(1000), "1K")
-        t.expectEqual(HumanInputFormatter.compact(12_438), "12.4K")
-        t.expectEqual(HumanInputFormatter.compact(999_949), "999.9K")
-        t.expectEqual(HumanInputFormatter.compact(2_400_000), "2.4M")
+        t.expectEqual(CountFormatter.compact(0), "0")
+        t.expectEqual(CountFormatter.compact(982), "982")
+        t.expectEqual(CountFormatter.compact(1000), "1K")
+        t.expectEqual(CountFormatter.compact(12_438), "12.4K")
+        t.expectEqual(CountFormatter.compact(999_949), "999.9K")
+        t.expectEqual(CountFormatter.compact(2_400_000), "2.4M")
     },
     TC("exact formatting") { t in
-        t.expectEqual(HumanInputFormatter.exact(12_438), "12,438")
-        t.expectEqual(HumanInputFormatter.exact(0), "0")
+        t.expectEqual(CountFormatter.exact(12_438), "12,438")
+        t.expectEqual(CountFormatter.exact(0), "0")
     },
 ]
 

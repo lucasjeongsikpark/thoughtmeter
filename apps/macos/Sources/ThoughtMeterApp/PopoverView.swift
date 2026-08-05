@@ -10,11 +10,11 @@ struct PopoverView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("Today’s Human Input")
+                Text("Today’s Thought Input")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 HStack(alignment: .firstTextBaseline, spacing: 5) {
-                    Text(HumanInputFormatter.exact(coordinator.todayTotal))
+                    Text(CountFormatter.exact(coordinator.todayTotal))
                         .font(.system(size: 26, weight: .semibold).monospacedDigit())
                     Text("keystrokes")
                         .font(.caption)
@@ -30,7 +30,7 @@ struct PopoverView: View {
                             Text(entry.source.displayName)
                                 .lineLimit(1)
                             Spacer()
-                            Text(HumanInputFormatter.exact(entry.keystrokes))
+                            Text(CountFormatter.exact(entry.keystrokes))
                                 .monospacedDigit()
                                 .foregroundStyle(.secondary)
                         }
@@ -38,7 +38,7 @@ struct PopoverView: View {
                     }
                 }
             } else {
-                Text("Start typing in a selected tool to see your Human Input here.")
+                Text("Start typing in a selected tool to see your Thought Input here.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
@@ -84,6 +84,7 @@ struct PopoverView: View {
         .onAppear {
             coordinator.popoverVisible = true
             coordinator.refreshNow()
+            SettingsOpener.register { openSettings() } // backup registration
         }
         .onDisappear { coordinator.popoverVisible = false }
     }

@@ -9,7 +9,7 @@ First public release.
 
 ### Added
 - macOS menu bar app (Apple Silicon, macOS 14+) counting keyboard-down events
-  inside user-selected AI tools and workspaces — the **Human Input** metric.
+  inside user-selected AI tools and workspaces — the **Thought Input** metric.
 - Two tracking modes: *Selected tools only* (default) and *All recognized AI tools*.
 - Recognized catalog (verified against installed bundles at runtime):
   AI apps (ChatGPT, Claude, Perplexity, Microsoft Copilot, Raycast, LM Studio,

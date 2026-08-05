@@ -1,8 +1,8 @@
 import Foundation
 
-/// Decides whether a keyboard event counts as one Human Input keystroke.
+/// Decides whether a keyboard event counts as one Thought Input keystroke.
 ///
-/// Rules (see PRIVACY.md and README "What Human Input means"):
+/// Rules (see PRIVACY.md and README "What Thought Input means"):
 /// - Every `keyDown` counts, including auto-repeat.
 /// - `keyUp` never reaches this type (the event source does not observe it).
 /// - A modifier counts when it transitions into the pressed state

@@ -17,7 +17,7 @@ let exitCode = runSuites([
     ("AtomicFile", atomicFileTests),
     ("ChromeStateReader", chromeReaderTests),
     ("AppSettings", settingsTests),
-    ("HumanInputFormatter", formatterTests),
+    ("CountFormatter", formatterTests),
     ("LocalDate", localDateTests),
 ])
 

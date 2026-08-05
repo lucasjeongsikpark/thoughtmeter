@@ -64,8 +64,8 @@ final class AppCoordinator: ObservableObject {
     var menuBarText: String? {
         switch settings.menuBarDisplay {
         case .iconOnly, .iconHiddenCount: return nil
-        case .iconCompactCount: return HumanInputFormatter.compact(todayTotal)
-        case .iconRawCount: return HumanInputFormatter.exact(todayTotal)
+        case .iconCompactCount: return CountFormatter.compact(todayTotal)
+        case .iconRawCount: return CountFormatter.exact(todayTotal)
         }
     }
 
@@ -411,7 +411,7 @@ final class AppCoordinator: ObservableObject {
         guard let store else { return }
         let panel = NSSavePanel()
         panel.nameFieldStringValue = "ThoughtMeter-export.csv"
-        panel.title = "Export Human Input data"
+        panel.title = "Export Thought Input data"
         NSApp.activate(ignoringOtherApps: true)
         guard panel.runModal() == .OK, let url = panel.url else { return }
         do {

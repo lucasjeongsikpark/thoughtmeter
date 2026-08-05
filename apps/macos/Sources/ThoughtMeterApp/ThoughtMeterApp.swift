@@ -28,19 +28,28 @@ struct ThoughtMeterApp: App {
 }
 
 /// Menu bar item content: state-aware template icon plus optional count.
+/// Also registers the scene's `openSettings` action with SettingsOpener —
+/// the label exists for the whole app lifetime, so plain NSWindows (the
+/// dashboard) can open Settings through it.
 struct MenuBarLabel: View {
+    @Environment(\.openSettings) private var openSettings
     let iconState: MenuBarIconState
     let text: String?
 
     var body: some View {
-        // NSImage is cached per state inside MenuBarIconRenderer.
-        if let text {
-            HStack(spacing: 3) {
+        Group {
+            // NSImage is cached per state inside MenuBarIconRenderer.
+            if let text {
+                HStack(spacing: 3) {
+                    Image(nsImage: MenuBarIconRenderer.image(for: iconState))
+                    Text(text).font(.system(size: 12, weight: .medium).monospacedDigit())
+                }
+            } else {
                 Image(nsImage: MenuBarIconRenderer.image(for: iconState))
-                Text(text).font(.system(size: 12, weight: .medium).monospacedDigit())
             }
-        } else {
-            Image(nsImage: MenuBarIconRenderer.image(for: iconState))
+        }
+        .onAppear {
+            SettingsOpener.register { openSettings() }
         }
     }
 }

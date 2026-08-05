@@ -11,16 +11,23 @@ struct ShareCardSheet: View {
     let stats: DashboardStats
     @State private var includeSources = true
 
+    private let previewScale: CGFloat = 0.4
+
     var body: some View {
         VStack(spacing: 14) {
-            Text("Proof of Thought")
+            Text("Share your Proof of Thought")
                 .font(.headline)
-            Text("Today’s trace, rendered locally as a 1200×630 image.")
+            Text("Today’s trace, rendered locally as a 1200×630 image. Nothing is uploaded — you choose where it goes.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
+            // Preview at 40%: the card lays out at its full fixed size, the
+            // scale effect shrinks the rendering, and the outer frame crops
+            // the (now matching) visual bounds — without this, SwiftUI clips
+            // a zoomed-in center region instead of showing the whole card.
             ShareCardView(stats: stats, includeSources: includeSources)
-                .frame(width: 480, height: 252)
+                .scaleEffect(previewScale)
+                .frame(width: 1200 * previewScale, height: 630 * previewScale)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .overlay(RoundedRectangle(cornerRadius: 8).stroke(.separator))
 
@@ -29,7 +36,7 @@ struct ShareCardSheet: View {
             HStack {
                 Button("Cancel") { dismiss() }
                 Spacer()
-                Button("Save PNG…") { save() }
+                Button("Save Image…") { save() }
                     .keyboardShortcut(.defaultAction)
             }
         }
@@ -67,12 +74,12 @@ struct ShareCardView: View {
             Color(red: 0.97, green: 0.97, blue: 0.955)
 
             VStack(alignment: .leading, spacing: 0) {
-                Text("Today’s Human Input")
+                Text("Today’s Thought Input")
                     .font(.system(size: 34, weight: .medium))
                     .foregroundStyle(Color.black.opacity(0.55))
 
                 HStack(alignment: .firstTextBaseline, spacing: 16) {
-                    Text(HumanInputFormatter.exact(stats.total))
+                    Text(CountFormatter.exact(stats.total))
                         .font(.system(size: 110, weight: .bold, design: .rounded))
                         .foregroundStyle(Color.black.opacity(0.88))
                     Text("keystrokes")

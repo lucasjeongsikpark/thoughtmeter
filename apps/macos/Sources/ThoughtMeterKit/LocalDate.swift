@@ -45,7 +45,7 @@ public struct LocalDateProvider {
 }
 
 /// Formats keystroke counts for display. The unit is always keystrokes.
-public enum HumanInputFormatter {
+public enum CountFormatter {
     /// Compact form for the menu bar: 982 → "982", 12438 → "12.4K", 2400000 → "2.4M".
     public static func compact(_ count: Int) -> String {
         switch count {
