@@ -5,8 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
 ## [Unreleased]
 
-The Chrome extension is bumped to 0.1.2 (its versioning is independent of
-the app's — see the first entry).
+## [0.1.3] — 2026-08-05
+
+Bug-fix release gathering three rounds of full-repository audits. The theme
+is honesty about state: several places claimed tracking was working when it
+demonstrably was not. The Chrome extension ships at 0.1.2 (its versioning is
+independent of the app's — see the first entry).
 
 ### Fixed
 - The extension popup no longer claims "Connected" when the native host is
