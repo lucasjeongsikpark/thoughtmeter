@@ -5,6 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-08-06
+
+The dashboard charts became readable and navigable: exact numbers on hover,
+and any day in a by-day chart opens on its own. The Chrome extension is
+unchanged at 0.1.2.
+
 ### Added
 - Hovering a bar in the dashboard's charts now shows its exact count. The
   "By hour" chart reads out the hour and its keystrokes; the "By day" charts
