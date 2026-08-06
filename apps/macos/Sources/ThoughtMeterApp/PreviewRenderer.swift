@@ -37,11 +37,42 @@ enum PreviewRenderer {
                 .background(Color(nsColor: .windowBackgroundColor)),
             name: "dashboard-week.png", in: directory
         )
+        // The hover readouts, pinned open. Hour 9 sits mid-chart; the last
+        // day exercises the annotation's fit-to-chart clamping at the right
+        // edge, where an unclamped tooltip would spill out of the card.
+        let renderedHover = render(
+            DashboardSections(stats: sampleWeekStats(), range: .week,
+                              // A non-nil handler is what adds the click
+                              // hint, so the render must supply one.
+                              onSelectDay: { _ in },
+                              previewHoveredDate: "2026-08-04")
+                .frame(width: 720)
+                .padding(24)
+                .background(Color(nsColor: .windowBackgroundColor)),
+            name: "dashboard-hover-day.png", in: directory
+        )
+        let renderedHourHover = render(
+            DashboardSections(stats: stats, range: .today, previewHoveredHour: 9)
+                .frame(width: 720)
+                .padding(24)
+                .background(Color(nsColor: .windowBackgroundColor)),
+            name: "dashboard-hover-hour.png", in: directory
+        )
+        // The day view a by-day bar click opens: same sections as Today,
+        // minus the range-only comparison card and the 7-day trend.
+        let renderedDay = render(
+            DashboardSections(stats: sampleDayStats(), range: .week, dayDate: "2026-08-03")
+                .frame(width: 720)
+                .padding(24)
+                .background(Color(nsColor: .windowBackgroundColor)),
+            name: "dashboard-day.png", in: directory
+        )
         let renderedCard = render(
             ShareCardView(stats: stats, includeSources: true),
             name: "proof-of-thought.png", in: directory
         )
-        guard renderedToday && renderedWeek && renderedCard else { exit(1) }
+        guard renderedToday && renderedWeek && renderedDay
+                && renderedHover && renderedHourHover && renderedCard else { exit(1) }
         print("previews written to \(directory.path)")
         exit(0)
     }
@@ -102,6 +133,16 @@ enum PreviewRenderer {
             ("2026-08-01", 4_180), ("2026-08-02", 6_540), ("2026-08-03", 16_870),
             ("2026-08-04", stats.total),
         ]
+        return stats
+    }
+
+    /// One inspected past day. It carries no `daily` series and no 7-day
+    /// average on purpose: the day view must not render either, so a preview
+    /// that supplied them could hide a regression that does.
+    private static func sampleDayStats() -> DashboardStats {
+        var stats = sampleStats()
+        stats.daily = []
+        stats.sevenDayAverage = nil
         return stats
     }
 

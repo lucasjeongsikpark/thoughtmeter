@@ -5,6 +5,15 @@ Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
 ## [Unreleased]
 
+### Added
+- Hovering a bar in the dashboard's charts now shows its exact count. The
+  "By hour" chart reads out the hour and its keystrokes; the "By day" charts
+  (7 Days, 30 Days, and Today's "Last 7 days" trend) read out the full date
+  and its keystrokes.
+- Clicking a day in any by-day chart opens that day on its own: total, peak
+  hour, top source, its hourly chart, and its per-source breakdown. A Back
+  button returns to the range you came from.
+
 ## [0.1.3] — 2026-08-05
 
 Bug-fix release gathering three rounds of full-repository audits. The theme
