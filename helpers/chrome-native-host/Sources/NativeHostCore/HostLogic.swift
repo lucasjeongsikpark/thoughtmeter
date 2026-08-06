@@ -99,6 +99,19 @@ public enum HostLogic {
         return current == lastWrittenByUs
     }
 
+    /// The app reads state.json, not this ack — so a state the host failed
+    /// to persist is a chain the app cannot see, and the popup must not
+    /// render it as "Tracked: Yes" while nothing counts. The connection
+    /// itself is still real (the host is alive and answering), so only the
+    /// tracked claim is withdrawn.
+    public static func ackAfterFailedPersist(_ outcome: Outcome) -> Outcome {
+        guard outcome.response["type"] == .string("stateAck") else { return outcome }
+        var response = outcome.response
+        response["tracked"] = .bool(false)
+        response["trackedDomain"] = .null
+        return Outcome(response: response, state: outcome.state)
+    }
+
     public static func encodeResponse(_ outcome: Outcome) throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.sortedKeys]

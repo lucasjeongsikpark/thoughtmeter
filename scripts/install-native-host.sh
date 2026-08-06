@@ -32,6 +32,18 @@ if [[ -z "$APP" || ! -d "$APP" ]]; then
   exit 1
 fi
 
+# Chrome requires the manifest's "path" to be absolute on macOS (relative is a
+# Windows-only allowance) — a relative --app would register fine and then fail
+# only as "Not connected" in the extension. A quote or backslash in the path
+# would invalidate the manifest JSON as a whole, store origin included.
+APP="$(cd "$APP" && pwd)"
+if [[ "$APP" == *'"'* || "$APP" == *'\'* ]]; then
+  echo "error: app path contains a character (\" or \\) that cannot be written into the manifest JSON:" >&2
+  echo "  $APP" >&2
+  echo "  Move the app to a plainly named directory and re-run. Nothing was changed." >&2
+  exit 1
+fi
+
 HOST_BINARY="$APP/Contents/MacOS/thoughtmeter-native-host"
 if [[ ! -x "$HOST_BINARY" ]]; then
   echo "error: native host binary missing at $HOST_BINARY" >&2

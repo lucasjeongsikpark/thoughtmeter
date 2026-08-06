@@ -43,6 +43,38 @@ the app's — see the first entry).
   4.0 / 4.2 / 5.0 / 6.0).
 - Download-verification commands in README and docs/INSTALL work when only
   some release assets were downloaded (`--ignore-missing`).
+- A persistent save failure (disk full, database made unwritable mid-session)
+  is now visible: the popover reads "Active — counts are not being saved"
+  with an explanation, and the menu bar icon shows its warning state.
+  Previously the app said "Active" indefinitely while every 30-second flush
+  failed, kept displaying the unsaved counts as if recorded, and quitting
+  discarded them without a word.
+- The dashboard's empty state names the actual blocker — Input Monitoring
+  missing or lost, tracking paused, or no tools selected — instead of
+  advising "start typing in a selected tool", which cannot work in any of
+  those states (the dashboard is a standalone window with no status row).
+- The extension popup no longer reports "Tracked: Yes" when the native host
+  failed to persist the state the app actually reads (for example with a
+  full disk): the host now withdraws the tracked claim from its ack, so the
+  popup and the app can no longer disagree about whether typing counts.
+- A transient database read error while reloading sources no longer wipes
+  the Chrome domain config and silently stops all counting until the next
+  user action — the last known-good source set is kept instead.
+- Chrome tracking now recovers when the data folder is deleted and recreated
+  while the app runs: the state-file watch binds to the old folder's inode
+  and never fires again, so the app re-reads the file by path every 30
+  seconds — which also makes the onboarding "Retry Connection" button
+  genuinely retry.
+- `scripts/install-native-host.sh` registers an absolute host path (Chrome
+  silently rejects a relative one — the manifest looked registered but the
+  extension could only ever say "Not connected") and refuses app paths
+  containing `"` or `\`, which would invalidate the whole manifest JSON.
+- The privacy check's zero-dependency guard now catches multi-line and
+  registry `.package(` declarations in Package.swift, and `make verify`'s
+  clean-machine launch guard masks the debug build directory too, so
+  verifying a debug bundle proves the same thing it proves for release.
+- README's supported-tools table lists all shipped editor variants
+  (Zed Preview, IntelliJ IDEA CE, PyCharm CE were recognized but unlisted).
 
 ## [0.1.2] — 2026-08-05
 

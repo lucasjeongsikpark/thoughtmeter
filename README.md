@@ -33,7 +33,7 @@ ThoughtMeter deliberately does **not** measure thinking, effort, productivity, o
 | Kind | Recognized out of the box |
 |---|---|
 | AI apps | ChatGPT, Claude, Perplexity, Microsoft Copilot, Grok, Raycast, LM Studio, Ollama, Jan |
-| AI-assisted editors | Visual Studio Code (+ Insiders, VSCodium), Cursor, Windsurf, Zed, Trae, Xcode, IntelliJ IDEA, PyCharm, WebStorm |
+| AI-assisted editors | Visual Studio Code (+ Insiders, VSCodium), Cursor, Windsurf, Zed (+ Preview), Trae, Xcode, IntelliJ IDEA (+ CE), PyCharm (+ CE), WebStorm |
 | Terminals | Terminal, iTerm2, Warp, Ghostty, Alacritty, kitty, WezTerm |
 | Chrome domains | chatgpt.com, claude.ai, gemini.google.com, aistudio.google.com, notebooklm.google.com, perplexity.ai, copilot.microsoft.com, grok.com, chat.deepseek.com, chat.mistral.ai, poe.com, character.ai, meta.ai, chat.qwen.ai, kimi.com, wrtn.ai, clova-x.naver.com, v0.dev, lovable.dev, bolt.new, replit.com, midjourney.com |
 | Custom | Any macOS app (picker) and any domain you add |

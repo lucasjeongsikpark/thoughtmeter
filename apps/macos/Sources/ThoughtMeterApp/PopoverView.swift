@@ -65,6 +65,11 @@ struct PopoverView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
+                } else if let flushError = coordinator.flushError {
+                    Text("\(flushError) Recent input is held in memory and is written automatically once saving recovers — quitting before then loses it.")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 if let current = coordinator.currentSourceName {
                     HStack(spacing: 5) {
@@ -122,6 +127,8 @@ struct PopoverView: View {
                 Text("Input Monitoring needed").foregroundStyle(.orange)
             } else if !coordinator.tapRunning {
                 Text("Input Monitoring lost — re-grant needed").foregroundStyle(.orange)
+            } else if coordinator.flushError != nil {
+                Text("Active — counts are not being saved").foregroundStyle(.red)
             } else if coordinator.isPaused {
                 Text(coordinator.pauseDescription).foregroundStyle(.orange)
             } else if coordinator.chromeRelevant && !coordinator.chromeConnected {

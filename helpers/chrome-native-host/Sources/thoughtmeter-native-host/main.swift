@@ -43,14 +43,19 @@ func nowUnix() -> Int64 { Int64(Date().timeIntervalSince1970) }
 /// (HostLogic.shouldWriteState).
 var lastWrittenState: ChromeDomainState?
 
-func writeState(_ state: ChromeDomainState) {
+/// Returns whether the state the caller is about to ack is actually visible
+/// to the app: written now, or deliberately left to a fresher foreign write.
+@discardableResult
+func writeState(_ state: ChromeDomainState) -> Bool {
     let current = AtomicFile.readJSON(ChromeDomainState.self, from: DataPaths.chromeStateURL)
     guard HostLogic.shouldWriteState(state, over: current,
                                      lastWrittenByUs: lastWrittenState,
-                                     now: nowUnix()) else { return }
+                                     now: nowUnix()) else { return true }
     if (try? AtomicFile.writeJSON(state, to: DataPaths.chromeStateURL)) != nil {
         lastWrittenState = state
+        return true
     }
+    return false
 }
 
 func send(_ outcome: HostLogic.Outcome) {
@@ -83,8 +88,10 @@ while true {
         shutdown() // protocol violation; fail closed
     }
     for message in messages {
-        let outcome = HostLogic.handle(messageData: message, config: configCache.current(), now: nowUnix())
-        if let state = outcome.state { writeState(state) }
+        var outcome = HostLogic.handle(messageData: message, config: configCache.current(), now: nowUnix())
+        if let state = outcome.state, !writeState(state) {
+            outcome = HostLogic.ackAfterFailedPersist(outcome)
+        }
         send(outcome)
     }
 }

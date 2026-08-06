@@ -59,10 +59,9 @@ let hostLogicTests: [TC] = [
         let outcome = HostLogic.handle(messageData: stateMessage("secret-site.example.com"), config: testConfig, now: 500)
         t.expectEqual(outcome.state, ChromeDomainState(trackedDomain: nil, updatedAt: 500))
         t.expectEqual(outcome.response["tracked"], .bool(false))
-        if let data = try? HostLogic.encodeResponse(outcome) {
-            let text = String(decoding: data, as: UTF8.self)
-            t.expect(!text.contains("secret-site"), "non-selected hostname must not appear in the ack")
-        }
+        let data = try HostLogic.encodeResponse(outcome)
+        let text = String(decoding: data, as: UTF8.self)
+        t.expect(!text.contains("secret-site"), "non-selected hostname must not appear in the ack")
     },
     TC("null host writes null state") { t in
         let outcome = HostLogic.handle(messageData: stateMessage(nil), config: testConfig, now: 500)
@@ -119,6 +118,17 @@ let hostLogicTests: [TC] = [
         let currentNull = ChromeDomainState(trackedDomain: nil, updatedAt: 999)
         t.expect(HostLogic.shouldWriteState(ourNull, over: currentNull, lastWrittenByUs: nil, now: 1000))
         t.expect(HostLogic.shouldWriteState(ourNull, over: nil, lastWrittenByUs: nil, now: 1000))
+    },
+    TC("failed persist downgrades the ack to not-tracked") { t in
+        let outcome = HostLogic.handle(messageData: stateMessage("claude.ai"), config: testConfig, now: 500)
+        t.expectEqual(outcome.response["tracked"], .bool(true))
+        let downgraded = HostLogic.ackAfterFailedPersist(outcome)
+        t.expectEqual(downgraded.response["type"], .string("stateAck"))
+        t.expectEqual(downgraded.response["tracked"], .bool(false))
+        t.expectEqual(downgraded.response["trackedDomain"], .null)
+        t.expectEqual(downgraded.state, outcome.state, "only the ack is withdrawn, not the decision")
+        let pong = HostLogic.handle(messageData: Data(#"{"type":"ping"}"#.utf8), config: testConfig, now: 500)
+        t.expectEqual(HostLogic.ackAfterFailedPersist(pong).response, pong.response)
     },
 ]
 

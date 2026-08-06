@@ -46,6 +46,11 @@ final class AppCoordinator: ObservableObject {
     /// permissionGranted, or the app looks active while counting nothing.
     @Published private(set) var tapRunning = false
     @Published var startupError: String?
+    /// Non-nil once the periodic flush has failed twice in a row (~60 s):
+    /// counts keep accumulating in memory and are NOT durable — a quit in
+    /// this state loses them, so the UI must stop implying they are recorded.
+    @Published private(set) var flushError: String?
+    private var consecutiveFlushFailures = 0
 
     var trackingHealthy: Bool { permissionGranted && tapRunning }
 
@@ -64,6 +69,9 @@ final class AppCoordinator: ObservableObject {
 
     var menuBarIconState: MenuBarIconState {
         if !trackingHealthy { return .noPermission }
+        // Same warning mark: input is not being recorded durably. The
+        // popover names the actual problem.
+        if flushError != nil { return .noPermission }
         if isPaused { return .paused }
         if chromeRelevant && !chromeConnected { return .chromeDisconnected }
         return .active
@@ -174,6 +182,11 @@ final class AppCoordinator: ObservableObject {
     private func tick() {
         flushQuietly()
         applyPauseState()
+        // The state-file watch binds to the data directory's inode: deleting
+        // and recreating that folder while running (it is user-visible via
+        // "Reveal Data Folder") silences the watch forever. A path-based
+        // re-read each tick self-heals within 30 s, off the main thread.
+        chromeReader.refresh()
         recomputeActiveSource() // Chrome freshness can expire without an event
         refreshChromeStatus()
         // Permission can be revoked (or invalidated by an update — ad-hoc
@@ -258,9 +271,24 @@ final class AppCoordinator: ObservableObject {
 
     func reloadSources() {
         guard let store else { return }
-        sources = (try? store.listSources()) ?? []
+        do {
+            sources = try store.listSources()
+        } catch {
+            // Deriving anything from a failed read would cascade: an empty
+            // list here would wipe chrome/config.json and silently stop all
+            // counting until the next successful reload. Keep the last
+            // known-good set instead.
+            NSLog("ThoughtMeter: could not reload sources, keeping the previous set: %@",
+                  String(describing: error))
+            return
+        }
         resolver.updateEnabledSources(sources)
-        try? ChromeConfigWriter.write(domains: resolver.enabledDomains())
+        do {
+            try ChromeConfigWriter.write(domains: resolver.enabledDomains())
+        } catch {
+            NSLog("ThoughtMeter: could not write the Chrome host config: %@",
+                  String(describing: error))
+        }
         recomputeActiveSource()
         refreshStats()
     }
@@ -450,9 +478,18 @@ final class AppCoordinator: ObservableObject {
     private func flushQuietly() {
         do {
             try flusher?.flush()
+            consecutiveFlushFailures = 0
+            if flushError != nil { flushError = nil }
         } catch {
-            // Counts stay pending in memory; the next cycle retries.
+            // Counts stay pending in memory; the next cycle retries (D41
+            // keeps the retry lossless). One miss can be transient
+            // contention; two in a row (~60 s) is an outage the user must
+            // see, because a quit discards everything still pending.
+            consecutiveFlushFailures += 1
             NSLog("ThoughtMeter flush failed: %@", String(describing: error))
+            if consecutiveFlushFailures >= 2 && flushError == nil {
+                flushError = "Counts cannot be saved: \(error)"
+            }
         }
     }
 

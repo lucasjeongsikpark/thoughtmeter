@@ -54,7 +54,7 @@ struct DashboardView: View {
                     // blame them for a storage failure. Match the popover.
                     storageErrorState(startupError)
                 } else {
-                    DashboardSections(stats: stats, range: range)
+                    DashboardSections(stats: stats, range: range, inactiveReason: inactiveReason)
                 }
             }
             .padding(24)
@@ -115,6 +115,23 @@ struct DashboardView: View {
             }
             .help("Settings")
         }
+    }
+
+    /// Why the empty state cannot be fixed by typing, when that is the case.
+    /// The dashboard is a standalone window with no status row: a stopped or
+    /// paused tracker must be named here, or the empty state blames the user
+    /// ("start typing") for a pipeline that provably records nothing.
+    private var inactiveReason: String? {
+        if !coordinator.trackingHealthy {
+            return "Tracking is stopped — Input Monitoring is missing or was lost. Re-grant it in System Settings ▸ Privacy & Security ▸ Input Monitoring."
+        }
+        if coordinator.isPaused {
+            return "Tracking is paused. Resume it from the menu bar icon to keep counting."
+        }
+        if !coordinator.sources.contains(where: { $0.isEnabled }) {
+            return "No tools are selected. Choose what to track in Settings ▸ Tracking."
+        }
+        return nil
     }
 
     private func storageErrorState(_ message: String) -> some View {
@@ -194,6 +211,10 @@ struct DashboardView: View {
 struct DashboardSections: View {
     let stats: DashboardStats
     let range: DashboardRange
+    /// Non-nil when tracking provably records nothing (permission lost,
+    /// paused, no sources) — replaces the "start typing" advice, which
+    /// cannot work in those states. Nil for offscreen preview renders.
+    var inactiveReason: String? = nil
 
     /// One calm hue for all marks: identity lives in labels, not color.
     private let barStyle = Color.accentColor
@@ -217,13 +238,15 @@ struct DashboardSections: View {
 
     private var emptyState: some View {
         VStack(spacing: 10) {
-            Image(systemName: "keyboard")
+            Image(systemName: inactiveReason == nil ? "keyboard" : "exclamationmark.triangle")
                 .font(.system(size: 36))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(inactiveReason == nil ? AnyShapeStyle(.secondary) : AnyShapeStyle(.orange))
             Text("Nothing here yet")
                 .font(.title3.weight(.medium))
-            Text("Start typing in a selected tool to see your Thought Input here.")
+            Text(inactiveReason ?? "Start typing in a selected tool to see your Thought Input here.")
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: 440)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 120)

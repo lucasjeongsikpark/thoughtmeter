@@ -100,22 +100,34 @@ echo "==> clean-machine launch (resource bundle must resolve from the app itself
 # another Mac — v0.1.0 shipped exactly that crash (D39). Masking the fallback
 # reproduces the clean machine: the app must render previews from its own
 # Contents/Resources alone.
-SPM_BUNDLE="$ROOT/.build/arm64-apple-macosx/release/ThoughtMeter_ThoughtMeter.bundle"
+# Both configurations are masked: the baked fallback points at whichever
+# build dir produced the binary, so verifying a debug bundle with only the
+# release path masked would prove nothing.
+mask_spm_bundles() {
+  local config bundle
+  for config in release debug; do
+    bundle="$ROOT/.build/arm64-apple-macosx/$config/ThoughtMeter_ThoughtMeter.bundle"
+    if [[ -d "$bundle" ]]; then mv "$bundle" "$bundle.masked"; fi
+  done
+}
+unmask_spm_bundles() {
+  local config bundle
+  for config in release debug; do
+    bundle="$ROOT/.build/arm64-apple-macosx/$config/ThoughtMeter_ThoughtMeter.bundle"
+    if [[ -d "$bundle.masked" ]]; then mv "$bundle.masked" "$bundle" 2>/dev/null || true; fi
+  done
+}
 PREVIEW_DIR="$(mktemp -d)"
-if [[ -d "$SPM_BUNDLE" ]]; then
-  mv "$SPM_BUNDLE" "$SPM_BUNDLE.masked"
-  trap 'mv "$SPM_BUNDLE.masked" "$SPM_BUNDLE" 2>/dev/null || true' EXIT
-fi
+trap unmask_spm_bundles EXIT
+mask_spm_bundles
 if "$APP/Contents/MacOS/ThoughtMeter" --render-previews "$PREVIEW_DIR" >/dev/null 2>&1 \
    && [[ -s "$PREVIEW_DIR/dashboard-today.png" ]]; then
   echo "    launched and rendered with the build-dir fallback masked"
 else
   fail "app failed to render with the .build fallback masked — it would crash on a clean machine (resource bundle not resolving from Contents/Resources)"
 fi
-if [[ -d "$SPM_BUNDLE.masked" ]]; then
-  mv "$SPM_BUNDLE.masked" "$SPM_BUNDLE"
-  trap - EXIT
-fi
+unmask_spm_bundles
+trap - EXIT
 rm -rf "$PREVIEW_DIR"
 
 echo "==> privacy + network checks"

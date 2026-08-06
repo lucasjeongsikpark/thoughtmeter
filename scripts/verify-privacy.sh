@@ -66,7 +66,10 @@ if grep -q 'host_permissions' "$ROOT/extensions/chrome/manifest.json"; then
 fi
 
 # Dependency hygiene: the Swift package must have zero external dependencies.
-if grep -q 'dependencies:' "$ROOT/Package.swift" && grep -qE '\.package\(url' "$ROOT/Package.swift"; then
+# Flattened first: package declarations are conventionally multi-line, and a
+# line-based grep never sees `.package(` split across lines — nor registry
+# dependencies (`.package(id:`), which carry no url at all.
+if tr -d ' \t\n' < "$ROOT/Package.swift" | grep -qE '\.package\('; then
   fail "Package.swift gained an external dependency — justify and update checks"
 fi
 
