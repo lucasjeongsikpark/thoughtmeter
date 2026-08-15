@@ -32,8 +32,17 @@ if [[ "$DISTRIBUTION" == "1" ]]; then
     echo "  list yours with: security find-identity -v -p codesigning" >&2
     exit 1
   fi
-  if ! security find-identity -p codesigning 2>/dev/null | grep -q "$TM_SIGN_IDENTITY"; then
-    echo "error: distribution identity '$TM_SIGN_IDENTITY' is not in the keychain." >&2
+  # -v means "valid identities only". The default path below deliberately omits
+  # it, because a self-signed certificate is legitimately untrusted yet signs
+  # fine — but a Developer ID that has expired or been revoked must fail HERE,
+  # not ten minutes later when Apple rejects the notarization.
+  # -F and the surrounding quotes match a whole identity name literally: a
+  # company name can contain regex metacharacters, and an unanchored substring
+  # would match a longer, different identity.
+  if ! security find-identity -v -p codesigning 2>/dev/null | grep -qF "\"$TM_SIGN_IDENTITY\""; then
+    echo "error: distribution identity '$TM_SIGN_IDENTITY' is not a valid identity in the keychain." >&2
+    echo "  It may be missing, expired, or revoked. Check with:" >&2
+    echo "    security find-identity -v -p codesigning" >&2
     echo "  Refusing to fall back to ad-hoc signing for a distribution build." >&2
     exit 1
   fi
@@ -104,6 +113,19 @@ HOST_BINARY="$APP/Contents/MacOS/thoughtmeter-native-host"
 # no fallback, because an ad-hoc or self-signed public release would break
 # every existing user's Input Monitoring grant and Gatekeeper besides (D47).
 # (Distribution preconditions were validated at the top of this script.)
+#
+# Signing can also fail for reasons no precondition can rule out — `--timestamp`
+# contacts Apple's timestamp server, and a transient failure there is ordinary.
+# Under `set -e` that would leave a bundle behind with the native host signed
+# and the outer bundle not, which scripts/package.sh would package without
+# complaint on any later plain `make package`. Delete the bundle instead: a
+# missing app is an obvious error, a half-signed one is a silent shipping bug.
+signing_failed() {
+  echo "error: code signing failed — removing the partially signed bundle at $APP" >&2
+  echo "  Nothing usable was left in dist/. Re-run the build." >&2
+  rm -rf "$APP"
+}
+trap signing_failed ERR
 
 if [[ "$DISTRIBUTION" == "1" ]]; then
   # Inside-out: nested code first, then the bundle that contains it. --deep is
@@ -153,5 +175,7 @@ else
   codesign --force --deep --sign "$SIGN_IDENTITY" "$APP"
   codesign --verify --deep "$APP"
 fi
+
+trap - ERR
 
 echo "==> built $APP ($CONFIG, $VERSION)"

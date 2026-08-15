@@ -53,8 +53,10 @@ echo "==> Chrome extension package (deterministic)"
 rm -f "$EXT_ZIP"
 EXT_SRC="$ROOT/extensions/chrome"
 # SOURCE_DATE_EPOCH is the cross-project convention for this; default to the
-# extension's own last commit so the stamp tracks its content.
-EXT_EPOCH="${SOURCE_DATE_EPOCH:-$(git -C "$ROOT" log -1 --format=%ct -- extensions/chrome 2>/dev/null || true)}"
+# last commit that touched a file the archive actually CONTAINS. Watching the
+# whole directory would restamp the archive for an unrelated README edit.
+EXT_EPOCH="${SOURCE_DATE_EPOCH:-$(git -C "$ROOT" log -1 --format=%ct -- \
+  extensions/chrome/manifest.json extensions/chrome/src extensions/chrome/assets 2>/dev/null || true)}"
 [[ -n "$EXT_EPOCH" ]] || EXT_EPOCH=1704067200   # 2024-01-01T00:00:00Z
 # Zip inherits MS-DOS timestamps: two-second granularity, so an odd epoch
 # would round and break byte-equality between runs.
@@ -66,10 +68,19 @@ trap 'rm -rf "$STAGING" "$EXT_STAGE"' EXIT
 find "$EXT_STAGE" -name '.*' -delete
 find "$EXT_STAGE" -type d -exec chmod 755 {} +
 find "$EXT_STAGE" -type f -exec chmod 644 {} +
-find "$EXT_STAGE" -exec touch -t "$(date -r "$EXT_EPOCH" +%Y%m%d%H%M.%S)" {} +
-# -X drops uid/gid and macOS extended attributes; -@ takes the sorted list so
-# entry order is the sort order rather than directory order.
-(cd "$EXT_STAGE" && find . -type f | sed 's|^\./||' | LC_ALL=C sort | zip -X -q "$EXT_ZIP" -@)
+# TZ=UTC is load-bearing, not decoration. A zip entry's timestamp is an MS-DOS
+# field with NO timezone: `touch` interprets its stamp in local time and `zip`
+# writes the mtime back in local time, so the same source in Seoul and in UTC
+# would otherwise produce different archive bytes — which is exactly the
+# property this block exists to provide. Pinning both to UTC makes the archive
+# reproducible across machines, not just across runs on one machine.
+(
+  export TZ=UTC
+  find "$EXT_STAGE" -exec touch -t "$(date -r "$EXT_EPOCH" +%Y%m%d%H%M.%S)" {} +
+  # -X drops uid/gid and macOS extended attributes; -@ takes the sorted list so
+  # entry order is the sort order rather than directory order.
+  cd "$EXT_STAGE" && find . -type f | sed 's|^\./||' | LC_ALL=C sort | zip -X -q "$EXT_ZIP" -@
+)
 
 # Checksums and the cask describe FINAL bytes. In a distribution build the DMG
 # still has to be signed, notarized, and stapled — all of which rewrite it — so

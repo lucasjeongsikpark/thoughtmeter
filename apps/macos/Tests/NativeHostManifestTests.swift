@@ -111,9 +111,7 @@ let nativeHostManifestTests: [TC] = [
             "a working registration is left to its owner"
         )
     },
-    TC("changed origins trigger repair regardless of which copy is running") { t in
-        // Origins come from configuration, not from the running bundle, so
-        // this is safe to fix from any copy.
+    TC("origin drift is repaired for the copy that owns the registration") { t in
         let state = NativeHostManifest.InstalledState.present(
             .init(path: installedHost, origins: ["chrome-extension://\(devID)/"])
         )
@@ -123,6 +121,25 @@ let nativeHostManifestTests: [TC] = [
                 installedPathExists: true
             ),
             "origin drift is repaired"
+        )
+    },
+    TC("another copy's origins are NOT rewritten, even when they differ") { t in
+        // The dangerous shape: a bare `swift run ThoughtMeter` has no bundle,
+        // so it computes no production extension ID. If origin drift alone
+        // triggered repair it would strip the Web Store origin from a working
+        // /Applications registration.
+        let state = NativeHostManifest.InstalledState.present(
+            .init(path: installedHost,
+                  origins: [storeOrigin, "chrome-extension://\(devID)/"])
+        )
+        t.expect(
+            !NativeHostManifest.repairIsNeeded(
+                state,
+                expectedPath: "/Users/dev/repo/.build/debug/thoughtmeter-native-host",
+                expectedOrigins: ["chrome-extension://\(devID)/"],
+                installedPathExists: true
+            ),
+            "a live registration owned by another copy is untouched, origins included"
         )
     },
     TC("an absent manifest is NOT installed behind the user's back") { t in

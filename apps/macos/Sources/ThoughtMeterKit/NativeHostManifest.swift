@@ -128,8 +128,15 @@ public enum NativeHostManifest {
         case .unreadable:
             return true
         case .present(let installed):
-            if installed.origins != expectedOrigins { return true }
-            if installed.path == expectedPath { return false }
+            // Whose registration is it? Only the copy the manifest points at
+            // may keep it in sync. Checking origins first would break that:
+            // a bare `swift run ThoughtMeter` has no Info.plist, so it computes
+            // no production extension ID, sees an origin mismatch, and would
+            // rewrite the manifest — dropping the Web Store origin and cutting
+            // off the installed copy until it is relaunched.
+            if installed.path == expectedPath {
+                return installed.origins != expectedOrigins
+            }
             return !installedPathExists
         }
     }

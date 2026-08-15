@@ -28,10 +28,19 @@ echo "==> working tree state"
 # Hard failure, not a warning: a release artifact whose contents cannot be
 # traced to a specific commit is unauditable after the fact, and the warning
 # was easy to scroll past in a long release log.
-if [[ -n "$(git -C "$ROOT" status --porcelain 2>/dev/null)" ]]; then
+#
+# git's own errors are a failure too, not silence. Discarding them (as a bare
+# `2>/dev/null` would) turns "not a repository", "dubious ownership", or a
+# missing git into empty output — which reads as a clean tree.
+if ! tree_state="$(git -C "$ROOT" status --porcelain 2>&1)"; then
+  echo "error: could not read the working tree state — refusing to build release artifacts" >&2
+  echo "$tree_state" >&2
+  exit 1
+fi
+if [[ -n "$tree_state" ]]; then
   echo "error: working tree is not clean — refusing to build release artifacts" >&2
   echo "  Artifacts must correspond exactly to a commit. Commit or stash first:" >&2
-  git -C "$ROOT" status --short >&2
+  echo "$tree_state" >&2
   exit 1
 fi
 echo "    clean"

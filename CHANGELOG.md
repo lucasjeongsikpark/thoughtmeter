@@ -5,8 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
 ## [Unreleased]
 
-Groundwork for Apple-notarized releases, plus fixes to the Chrome connector's
-reliability and to two privacy claims that were not mechanically true.
+## [0.2.1] — 2026-08-14
+
+Fixes to the Chrome connector's reliability and to two privacy claims that were
+not mechanically true, plus groundwork for future Apple-notarized releases.
+This release is still signed the same way as 0.2.0, so updating does not affect
+your Input Monitoring permission.
 
 ### Fixed
 - SQLite's `-wal` and `-shm` sidecar files were left world-readable (`0644`)

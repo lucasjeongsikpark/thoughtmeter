@@ -54,6 +54,11 @@ jobs:
       # opaque `security import` error a dozen steps later.
       - name: Preflight
         env:
+          # Passed through env like every secret in this file, deliberately:
+          # a `${{ }}` expression is pasted into the script before bash sees it,
+          # so a crafted input value would run as code. This is the one value
+          # here a human types.
+          CONFIRM: ${{ inputs.confirm }}
           IDENTITY: ${{ vars.APPLE_DEVELOPER_IDENTITY }}
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           P12: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
@@ -64,7 +69,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          if [[ "${{ inputs.confirm }}" != "release" ]]; then
+          if [[ "$CONFIRM" != "release" ]]; then
             echo "error: type 'release' in the confirm input to run this workflow" >&2
             exit 1
           fi
