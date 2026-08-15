@@ -1,0 +1,178 @@
+name: Release
+
+# Public releases are produced here, not on a maintainer's laptop: the tag, the
+# commit, the toolchain, and the signing step all end up in one auditable log,
+# and GitHub attests where the artifacts came from.
+#
+# INERT until the owner creates the `production-release` environment and adds
+# the Apple secrets (see .local-project/MANUAL_ACTIONS.md). Until then a tag
+# push fails at the signing step rather than publishing anything unsigned.
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-sign-notarize:
+    runs-on: macos-15
+
+    # Environment protection is the security boundary: the Apple signing key and
+    # notarization credentials are environment secrets, so a job cannot read
+    # them until a required reviewer approves this deployment. Pull-request CI
+    # runs in no environment at all and therefore cannot reach them.
+    environment:
+      name: production-release
+
+    permissions:
+      contents: write      # create the release and upload assets
+      id-token: write      # OIDC identity used to sign the provenance attestation
+      attestations: write  # record build provenance for the artifacts
+
+    steps:
+      - name: Checkout the exact tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Verify the tag matches the configured version
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG="${GITHUB_REF_NAME#v}"
+          ROOT="$PWD"
+          source packaging/release-config.sh
+          if [[ "$TAG" != "$VERSION" ]]; then
+            echo "error: tag v$TAG does not match release-config VERSION=$VERSION" >&2
+            exit 1
+          fi
+          echo "tag v$TAG == VERSION $VERSION (extension $EXT_VERSION)"
+
+      - name: Toolchain info
+        run: |
+          sw_vers
+          swift --version
+          node --version
+          xcrun notarytool --version
+
+      # Everything that can fail without credentials runs before any secret is
+      # decrypted, so a broken build never reaches the signing key.
+      - name: Tests (Swift + extension)
+        run: make test
+
+      - name: Privacy source scan
+        run: make privacy-check
+
+      - name: Import the Developer ID certificate into a temporary keychain
+        env:
+          P12_BASE64: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CERT="$RUNNER_TEMP/developer-id.p12"
+          KEYCHAIN="$RUNNER_TEMP/thoughtmeter-signing.keychain-db"
+          # Generated per run and never stored anywhere: the keychain exists
+          # only for the life of this ephemeral runner.
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 24)"
+
+          printf '%s' "$P12_BASE64" | base64 --decode > "$CERT"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security import "$CERT" -k "$KEYCHAIN" -P "$P12_PASSWORD" \
+            -T /usr/bin/codesign -T /usr/bin/security
+          # Without this, codesign blocks on a UI prompt that no runner can answer.
+          security set-key-partition-list -S apple-tool:,apple: -s \
+            -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN"
+
+          rm -f "$CERT"
+          security find-identity -p codesigning "$KEYCHAIN" | grep "Developer ID Application"
+
+      - name: Store notarization credentials
+        env:
+          APPLE_ID: ${{ secrets.APPLE_NOTARY_APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_NOTARY_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          xcrun notarytool store-credentials thoughtmeter-notary \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID"
+
+      # build → notarize app → package → notarize DMG → verify → checksums.
+      # scripts/release.sh owns this order; the workflow does not reimplement it.
+      - name: Build, sign, notarize, package, verify, finalize
+        env:
+          TM_DISTRIBUTION_BUILD: "1"
+          TM_SIGN_IDENTITY: ${{ vars.APPLE_DEVELOPER_IDENTITY }}
+          TM_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          TM_NOTARY_PROFILE: thoughtmeter-notary
+        run: scripts/release.sh
+
+      - name: Record the release provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          source packaging/release-config.sh
+          {
+            echo "commit=$GITHUB_SHA"
+            echo "tag=$GITHUB_REF_NAME"
+            echo "app_version=$VERSION"
+            echo "extension_version=$EXT_VERSION"
+            echo "chrome_extension_id=$CHROME_EXTENSION_ID_PROD"
+            echo "runner=$RUNNER_OS $(sw_vers -productVersion)"
+            echo "swift=$(swift --version 2>&1 | head -1)"
+            echo "workflow_run=$GITHUB_RUN_ID"
+          } > dist/BUILD_PROVENANCE.txt
+          cat dist/BUILD_PROVENANCE.txt
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/SHA256SUMS.txt
+
+      # Draft first, attach everything, publish last: a release is never
+      # visible in a half-uploaded state.
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="$PWD"
+          source packaging/release-config.sh
+          gh release create "$GITHUB_REF_NAME" \
+            --verify-tag \
+            --draft \
+            --title "ThoughtMeter $GITHUB_REF_NAME" \
+            --notes-file dist/RELEASE_NOTES.md \
+            "dist/ThoughtMeter-$VERSION.dmg" \
+            "dist/ThoughtMeter-$VERSION.zip" \
+            "dist/thoughtmeter-extension-$EXT_VERSION.zip" \
+            dist/SHA256SUMS.txt \
+            dist/BUILD_PROVENANCE.txt
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$GITHUB_REF_NAME" --draft=false
+
+      - name: Homebrew cask (manual follow-up)
+        run: |
+          echo "Copy dist/thoughtmeter.rb into the tap repo as Casks/thoughtmeter.rb."
+          echo "Do NOT re-package afterwards — hdiutil output is not byte-reproducible,"
+          echo "so the DMG hash would drift away from the published asset."
+          cat dist/thoughtmeter.rb

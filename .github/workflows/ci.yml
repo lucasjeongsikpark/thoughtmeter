@@ -5,12 +5,19 @@ on:
     branches: [main]
   pull_request:
 
+# CI only reads the repository. It never touches release credentials — those
+# live in the production-release environment used by release.yml alone.
+permissions:
+  contents: read
+
 jobs:
   test-and-build:
     # arm64 runner to match the supported platform (Apple Silicon only).
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      # Actions are pinned to full commit SHAs: a tag is mutable, so @v7 means
+      # "whatever that tag points at today" — the version comment names it.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Toolchain info
         run: |
@@ -34,7 +41,7 @@ jobs:
         run: make verify
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: thoughtmeter-dist
           path: |

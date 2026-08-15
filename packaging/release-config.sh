@@ -29,6 +29,23 @@ BUNDLE_ID="org.thoughtmeter.app"
 # Chrome) is appended alongside it, so an unpacked extension keeps working.
 CHROME_EXTENSION_ID_PROD="omhnbpfiapchifodmobgeglhgpgolmhn"
 
+# Chrome rejects a native-messaging manifest wholesale when ONE allowed_origins
+# entry is malformed, so a typo here would sever the store extension's
+# connection for every user of the release — and present only as "Not
+# connected", with nothing pointing back at this file. The same 32-letters-a–p
+# rule already gates the development ID in three places; validate the release ID
+# on the same terms rather than trusting it because it is checked in.
+if [[ "$CHROME_EXTENSION_ID_PROD" != "UNSET" \
+   && ! "$CHROME_EXTENSION_ID_PROD" =~ ^[a-p]{32}$ ]]; then
+  echo "error: CHROME_EXTENSION_ID_PROD is not a valid Chrome extension ID" >&2
+  echo "  value: '$CHROME_EXTENSION_ID_PROD'" >&2
+  echo "  expected: exactly 32 letters a-p, or the literal UNSET" >&2
+  echo "  fix it in packaging/release-config.sh — nothing was built or packaged." >&2
+  # This file is sourced: return unwinds the caller's `source`, and the callers
+  # all run under `set -e`. exit covers the (unsupported) direct-execution case.
+  return 1 2>/dev/null || exit 1
+fi
+
 # Native messaging host name (must match the extension's connectNative call).
 NATIVE_HOST_NAME="org.thoughtmeter.chromehost"
 

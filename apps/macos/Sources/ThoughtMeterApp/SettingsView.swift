@@ -161,7 +161,7 @@ private struct ChromeSettings: View {
                         .disabled(devExtensionID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                                   && ReleaseConfig.productionExtensionID == nil)
                 }
-                Text("Once ThoughtMeter Connector is on the Chrome Web Store, installing it from there needs no ID — release builds know the store extension automatically.")
+                Text("The steps above are only for an unpacked development copy. Installing ThoughtMeter Connector from the Chrome Web Store needs no ID — release builds authorize the store extension automatically.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

@@ -65,9 +65,12 @@ Full details, including why each permission is needed: [docs/INSTALL.md](docs/IN
 
 ## Chrome extension
 
-Only needed if you want to count typing on selected AI websites. It reports the active tab's **hostname only** — never page content, prompts, full URLs, or history — to the local app via Chrome Native Messaging. Nothing touches the network.
+Only needed if you want to count typing on selected AI websites. It reads the URL of the active tab in the focused Chrome window just long enough to reduce it to a **bare hostname**, and sends only that hostname to the local app via Chrome Native Messaging. Page content, prompts, URL paths, query strings, and page titles are never sent or stored, and nothing touches the network.
 
-Setup: [extensions/chrome/README.md](extensions/chrome/README.md) (Chrome Web Store listing coming for v0.1).
+Install **ThoughtMeter Connector** from the Chrome Web Store:
+<https://chromewebstore.google.com/detail/thoughtmeter-connector/omhnbpfiapchifodmobgeglhgpgolmhn>
+
+Release builds already know the store extension, so there is nothing to configure. Setup notes and the development (unpacked) route: [extensions/chrome/README.md](extensions/chrome/README.md). Exactly what the extension does and does not handle: [PRIVACY.md](PRIVACY.md).
 
 ## Privacy
 

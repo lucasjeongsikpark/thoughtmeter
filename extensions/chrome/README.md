@@ -31,6 +31,15 @@ counted — and typing everywhere else in Chrome cannot.
 | `nativeMessaging` | Talk to the local ThoughtMeter app. |
 | `alarms` | Once-a-minute keepalive so the app can treat silence as "disconnected" and stop counting (fail closed). |
 
+## Install
+
+From the Chrome Web Store:
+<https://chromewebstore.google.com/detail/thoughtmeter-connector/omhnbpfiapchifodmobgeglhgpgolmhn>
+
+Release builds of the macOS app already authorize the store extension, so
+there is no ID to copy and nothing to configure — install it, then quit and
+reopen Chrome so it picks up the connector registration.
+
 ## Development install
 
 1. Build and run the ThoughtMeter app once (`make dev` in the repo root).

@@ -38,10 +38,17 @@ public enum DataPaths {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return appSupport
             .appendingPathComponent("Google/Chrome/NativeMessagingHosts", isDirectory: true)
-            .appendingPathComponent("org.thoughtmeter.chromehost.json")
+            .appendingPathComponent("\(NativeHostManifest.hostName).json")
     }
 
-    /// Create the base + chrome directories with owner-only permissions.
+    /// Create the base + chrome directories with owner-only permissions,
+    /// repairing the mode of any that already exist.
+    ///
+    /// `createDirectory`'s attributes apply only to directories it actually
+    /// creates — with `withIntermediateDirectories: true` an existing directory
+    /// is a silent no-op. Without the explicit repair, a directory created by
+    /// an older build, restored from a backup, or loosened by hand would keep
+    /// its permissions indefinitely while PRIVACY.md promised owner-only.
     public static func ensureDirectories() throws {
         let manager = FileManager.default
         for url in [baseDirectory, chromeDirectory] {
@@ -50,6 +57,7 @@ public enum DataPaths {
                 withIntermediateDirectories: true,
                 attributes: [.posixPermissions: 0o700]
             )
+            try? manager.setAttributes([.posixPermissions: 0o700], ofItemAtPath: url.path)
         }
     }
 }

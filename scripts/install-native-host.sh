@@ -61,6 +61,14 @@ fi
 
 ORIGINS=()
 if [[ "$CHROME_EXTENSION_ID_PROD" != "UNSET" && -n "$CHROME_EXTENSION_ID_PROD" ]]; then
+  # Same gate as the dev ID above. release-config.sh already refuses to load a
+  # malformed production ID; re-checking here keeps the guarantee local to the
+  # script that actually writes the manifest.
+  if [[ ! "$CHROME_EXTENSION_ID_PROD" =~ ^[a-p]{32}$ ]]; then
+    echo "error: CHROME_EXTENSION_ID_PROD '$CHROME_EXTENSION_ID_PROD' is not a valid Chrome extension ID (exactly 32 letters a-p)." >&2
+    echo "  Fix packaging/release-config.sh. Nothing was changed." >&2
+    exit 1
+  fi
   ORIGINS+=("chrome-extension://$CHROME_EXTENSION_ID_PROD/")
 fi
 if [[ -n "$DEV_ID" ]]; then

@@ -13,6 +13,7 @@ let exitCode = runSuites([
     ("SourceResolver", resolverTests),
     ("SQLiteStore", storeTests),
     ("AggregationFlusher", flusherTests),
+    ("NativeHostManifest", nativeHostManifestTests),
     ("NativeMessageFraming", framingTests),
     ("HostLogic", hostLogicTests),
     ("AtomicFile", atomicFileTests),

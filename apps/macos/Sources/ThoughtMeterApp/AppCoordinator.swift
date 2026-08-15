@@ -117,6 +117,15 @@ final class AppCoordinator: ObservableObject {
         }
         chromeReader.start()
 
+        // The connector manifest stores an absolute path to the host binary, so
+        // moving the app breaks Chrome silently. Repair it here rather than
+        // waiting for the user to notice "Not connected" and re-register by
+        // hand. Off the main thread: this touches the filesystem, and a no-op
+        // is the common case. Only ever repairs an EXISTING manifest.
+        DispatchQueue.global(qos: .utility).async {
+            NativeHostInstaller.ensureInstalledIfNeeded()
+        }
+
         eventSource.onEvent = { [tracker] event in
             tracker.handle(event) // hot path: no main-thread hop
         }

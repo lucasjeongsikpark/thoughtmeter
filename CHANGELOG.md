@@ -5,6 +5,39 @@ Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
 ## [Unreleased]
 
+Groundwork for Apple-notarized releases, plus fixes to the Chrome connector's
+reliability and to two privacy claims that were not mechanically true.
+
+### Fixed
+- SQLite's `-wal` and `-shm` sidecar files were left world-readable (`0644`)
+  even though the database itself was owner-only. They hold recently recorded
+  activity until it is checkpointed, so PRIVACY.md's owner-only promise did not
+  cover all of the data it implied. All three files are now `0600`, and the
+  data directory's `0700` mode is re-applied on every launch instead of only
+  when the directory is first created.
+- Moving or renaming ThoughtMeter.app silently broke the Chrome connector: the
+  native-messaging manifest stores an absolute path to the helper binary, and
+  nothing repaired it. The app now repairs a registration whose helper no
+  longer exists. It leaves a working registration alone, so a copy you are
+  testing cannot steal it from the copy you actually use.
+- Enabling the Chrome connector while running ThoughtMeter from the mounted
+  disk image registered a path that disappeared on eject. That is now refused
+  with an explanation to move the app to Applications first.
+
+### Changed
+- README and the extension's README link the live Chrome Web Store listing
+  instead of saying it is coming.
+- PRIVACY.md describes the extension's access precisely: it reads the active
+  tab's URL only to reduce it to a hostname, which is why the Web Store listing
+  discloses "Web history" even though the extension has no `history`
+  permission and stores no browsing history. It also now carries the Chrome Web
+  Store Limited Use statement, and describes the privacy/network scripts as
+  guardrails rather than proofs.
+- The Chrome extension package is built reproducibly (sorted entries, fixed
+  timestamps, no local file metadata), so the same source produces the same
+  archive bytes. This affects packaging only — the extension itself is
+  unchanged at 0.1.2.
+
 ## [0.2.0] — 2026-08-06
 
 The dashboard charts became readable and navigable: exact numbers on hover,

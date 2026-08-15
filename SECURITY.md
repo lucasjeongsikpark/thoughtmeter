@@ -2,10 +2,13 @@
 
 ## Reporting a vulnerability
 
-Please report vulnerabilities privately via **GitHub Security Advisories**
-("Report a vulnerability" on the repository's Security tab). If that is not
-possible, open a GitHub issue that says only "security issue — requesting
-private contact" without technical details, and a maintainer will follow up.
+If the repository's **Security** tab offers "Report a vulnerability", use it —
+that opens a private advisory only the maintainers can read.
+
+If you do not see that option, open a normal GitHub issue containing **only**
+the words "security issue — requesting private contact", with no technical
+detail, and a maintainer will follow up to arrange a private channel. Please
+use this route rather than describing the issue publicly.
 
 Please do **not** publicly disclose an unpatched vulnerability before we have
 had a reasonable window to coordinate — 90 days, or sooner by agreement.

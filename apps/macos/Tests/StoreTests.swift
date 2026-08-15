@@ -149,6 +149,48 @@ let storeTests: [TC] = [
             t.expectEqual(permissions & 0o777, 0o600)
         }
     },
+    TC("WAL sidecars are owner-only too") { t in
+        // -wal holds rows that have not been checkpointed into the database
+        // yet: same user data, and SQLite creates it with the process umask.
+        try withTempDirectory { dir in
+            let path = dir.appendingPathComponent("wal.sqlite").path
+            let store = try SQLiteStore(path: path)
+            let source = try store.upsertSource(
+                .init(kind: .app, identifier: "com.example.app", displayName: "Example", isBuiltin: false)
+            )
+            try store.recordActivity([
+                .init(bucketStart: 0, sourceID: source, keystrokes: 5,
+                      localDate: "2026-08-14", tzOffsetSeconds: 0),
+            ])
+
+            var checked = 0
+            for suffix in ["", "-wal", "-shm"] where FileManager.default.fileExists(atPath: path + suffix) {
+                let attributes = try FileManager.default.attributesOfItem(atPath: path + suffix)
+                let permissions = (attributes[.posixPermissions] as? NSNumber)?.int16Value ?? 0
+                t.expectEqual(permissions & 0o777, 0o600, "mode of \(path + suffix)")
+                checked += 1
+            }
+            t.expect(checked >= 2, "expected the database and at least one WAL sidecar to exist, checked \(checked)")
+        }
+    },
+    TC("an existing loose data directory is repaired to owner-only") { t in
+        try withTempDirectory { dir in
+            let base = dir.appendingPathComponent("ThoughtMeter", isDirectory: true)
+            try FileManager.default.createDirectory(
+                at: base, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o755]
+            )
+            let marker = base.appendingPathComponent("existing.txt")
+            try Data("keep me".utf8).write(to: marker)
+
+            _ = try SQLiteStore(path: base.appendingPathComponent("repair.sqlite").path)
+
+            let attributes = try FileManager.default.attributesOfItem(atPath: base.path)
+            let permissions = (attributes[.posixPermissions] as? NSNumber)?.int16Value ?? 0
+            t.expectEqual(permissions & 0o777, 0o700, "pre-existing directory is tightened, not left at 0755")
+            t.expect(FileManager.default.fileExists(atPath: marker.path),
+                     "repairing permissions must not disturb existing data")
+        }
+    },
 ]
 
 let flusherTests: [TC] = [

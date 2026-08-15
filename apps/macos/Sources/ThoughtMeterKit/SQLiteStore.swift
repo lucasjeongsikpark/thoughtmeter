@@ -53,6 +53,14 @@ public final class SQLiteStore {
             withIntermediateDirectories: true,
             attributes: [.posixPermissions: 0o700]
         )
+        // createDirectory's attributes apply only when it actually creates the
+        // directory: for one that already exists it is a silent no-op, so a
+        // directory created by an older build (or loosened by hand) would keep
+        // its old mode forever.
+        try? FileManager.default.setAttributes(
+            [.posixPermissions: 0o700],
+            ofItemAtPath: directory
+        )
         var handle: OpaquePointer?
         guard sqlite3_open_v2(path, &handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, nil) == SQLITE_OK,
               let opened = handle else {
@@ -67,8 +75,28 @@ public final class SQLiteStore {
             try execLocked("PRAGMA synchronous=NORMAL")
             try migrateLocked()
         }
-        // Aggregate counts only, but still user data: restrict to this user.
-        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: path)
+        hardenFilePermissions()
+    }
+
+    /// Owner-only permissions on the database AND its WAL sidecars.
+    ///
+    /// PRIVACY.md promises owner-only files, and `-wal` holds recently written
+    /// rows that have not been checkpointed yet — it is the same user data as
+    /// the main database, and SQLite creates it with the process umask rather
+    /// than inheriting the database's mode. Called after open and again after
+    /// operations that can recreate the sidecars.
+    func hardenFilePermissions() {
+        let manager = FileManager.default
+        for candidate in [path, path + "-wal", path + "-shm"]
+        where manager.fileExists(atPath: candidate) {
+            do {
+                try manager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: candidate)
+            } catch {
+                // Not fatal: counting must keep working on a filesystem that
+                // cannot represent these modes. Visible rather than silent.
+                NSLog("ThoughtMeter: could not restrict permissions on \(candidate) — \(error)")
+            }
+        }
     }
 
     deinit { close() }
@@ -228,6 +256,9 @@ public final class SQLiteStore {
                 throw error
             }
         }
+        // SQLite creates -wal/-shm lazily, on the first write, using the
+        // process umask — so the mode set at open cannot cover them.
+        hardenFilePermissions()
     }
 
     // MARK: - Queries
