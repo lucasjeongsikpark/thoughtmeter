@@ -9,6 +9,20 @@ look correct on the machine that built the app and fail for a real user.
 into the release notes draft or `.local-project/TEST_STATUS.md` and record the
 actual observations, not just ticks.
 
+## Which scenarios apply to this release
+
+ThoughtMeter currently ships **self-signed and not notarized**. Some checks
+below only exist once releases are signed with an Apple Developer ID.
+
+| Release type | Run |
+|---|---|
+| Self-signed (today) | **A** (skipping A2, A3, A6, A7, and reading A9 as "Gatekeeper prompts once; right-click → Open works"), **B**, **E** |
+| First Developer ID release | **A** in full, **B**, **C**, **E** |
+| Later Developer ID releases | **A** in full, **B**, **D**, **E** |
+
+Scenario C runs exactly once — on the release that changes the signing
+identity. Scenario D replaces it for every release after that.
+
 Use a fresh macOS user account, a spare Mac, or a clean VM. Do **not** test on
 the account that built the app: it holds the signing certificate and already
 has TCC records, which is exactly what hides these failures.

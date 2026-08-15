@@ -4,13 +4,26 @@ name: Release
 # commit, the toolchain, and the signing step all end up in one auditable log,
 # and GitHub attests where the artifacts came from.
 #
-# INERT until the owner creates the `production-release` environment and adds
-# the Apple secrets (see .local-project/MANUAL_ACTIONS.md). Until then a tag
-# push fails at the signing step rather than publishing anything unsigned.
+# DORMANT until the owner has Apple Developer credentials.
+#
+# Deliberately NOT tag-triggered yet. The project still ships self-signed
+# releases (D30), and those are cut with `make release` + a `vX.Y.Z` tag — if
+# this workflow listened for that tag it would fire on every ordinary release,
+# fail at the certificate-import step, and hang a red X on a release that is
+# actually fine.
+#
+# To activate, once .local-project/MANUAL_ACTIONS.md item 11 is done:
+#   replace the `workflow_dispatch:` trigger below with
+#     push:
+#       tags:
+#         - "v*"
 on:
-  push:
-    tags:
-      - "v*"
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "release" to confirm this builds and publishes a Developer-ID release'
+        required: true
+        default: ""
 
 permissions:
   contents: read
@@ -36,6 +49,50 @@ jobs:
       attestations: write  # record build provenance for the artifacts
 
     steps:
+      # Fail fast and legibly. Everything below assumes a tag ref and a full
+      # set of Apple credentials; without this the first symptom would be an
+      # opaque `security import` error a dozen steps later.
+      - name: Preflight
+        env:
+          IDENTITY: ${{ vars.APPLE_DEVELOPER_IDENTITY }}
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          P12: ${{ secrets.APPLE_DEVELOPER_ID_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.APPLE_DEVELOPER_ID_P12_PASSWORD }}
+          NOTARY_ID: ${{ secrets.APPLE_NOTARY_APPLE_ID }}
+          NOTARY_PASSWORD: ${{ secrets.APPLE_NOTARY_APP_SPECIFIC_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ inputs.confirm }}" != "release" ]]; then
+            echo "error: type 'release' in the confirm input to run this workflow" >&2
+            exit 1
+          fi
+
+          # Run this workflow FROM A TAG (the ref selector accepts tags), not
+          # from a branch: the version check and `gh release create --verify-tag`
+          # below both key off the ref name.
+          if [[ "$GITHUB_REF_TYPE" != "tag" ]]; then
+            echo "error: run this workflow from a vX.Y.Z tag, not from '$GITHUB_REF_NAME'" >&2
+            exit 1
+          fi
+
+          missing=()
+          [[ -n "$IDENTITY" ]]        || missing+=("vars.APPLE_DEVELOPER_IDENTITY")
+          [[ -n "$TEAM_ID" ]]         || missing+=("secrets.APPLE_TEAM_ID")
+          [[ -n "$P12" ]]             || missing+=("secrets.APPLE_DEVELOPER_ID_P12_BASE64")
+          [[ -n "$P12_PASSWORD" ]]    || missing+=("secrets.APPLE_DEVELOPER_ID_P12_PASSWORD")
+          [[ -n "$NOTARY_ID" ]]       || missing+=("secrets.APPLE_NOTARY_APPLE_ID")
+          [[ -n "$NOTARY_PASSWORD" ]] || missing+=("secrets.APPLE_NOTARY_APP_SPECIFIC_PASSWORD")
+
+          if (( ${#missing[@]} )); then
+            echo "error: the production-release environment is not configured yet." >&2
+            printf '  missing: %s\n' "${missing[@]}" >&2
+            echo "  See .local-project/MANUAL_ACTIONS.md item 11. Nothing was built." >&2
+            exit 1
+          fi
+          echo "preflight OK — releasing $GITHUB_REF_NAME"
+
       - name: Checkout the exact tag
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
