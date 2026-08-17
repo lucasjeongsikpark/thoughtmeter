@@ -5,6 +5,15 @@ Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.3.2] — 2026-08-16
+
+### Removed
+- The "Allowed extension IDs" row in Settings ▸ Chrome. It printed the raw
+  32-letter IDs from the native-messaging manifest — meaningless to store
+  users, and the mismatch it diagnosed is already self-healing: the app
+  repairs the manifest on every launch and "Register Connector" rewrites it
+  on demand. The in-app troubleshooting steps no longer reference it.
+
 ## [0.3.1] — 2026-08-16
 
 ### Removed

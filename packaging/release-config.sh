@@ -3,7 +3,7 @@
 # Every packaging script sources this file — edit values here only.
 
 # macOS app version for the next release, injected into Info.plist at build time.
-VERSION="0.3.1"
+VERSION="0.3.2"
 
 # The Chrome extension carries its own version in its manifest: it ships to the
 # Web Store on its own cadence and is NOT tied to VERSION above. Read it here so
@@ -25,8 +25,10 @@ BUNDLE_ID="org.thoughtmeter.app"
 
 # Chrome Web Store extension ID, assigned when the store item was created.
 # Baked into Info.plist as TMChromeExtensionID, which the app uses to write the
-# native-host manifest's allowed_origins. A locally saved dev ID (Settings ▸
-# Chrome) is appended alongside it, so an unpacked extension keeps working.
+# native-host manifest's allowed_origins. A locally saved dev ID (set with
+# `defaults write org.thoughtmeter.app devChromeExtensionID` — see
+# CONTRIBUTING.md) is appended alongside it, so an unpacked extension keeps
+# working.
 CHROME_EXTENSION_ID_PROD="omhnbpfiapchifodmobgeglhgpgolmhn"
 
 # Chrome rejects a native-messaging manifest wholesale when ONE allowed_origins
