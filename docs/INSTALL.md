@@ -39,19 +39,38 @@ Then start ThoughtMeter from Applications and jump to
 
 ## First launch
 
-ThoughtMeter is open-source and currently distributed **without Apple
-notarization** (that requires a paid Apple Developer membership the project
-doesn't have yet). macOS will therefore block the very first open:
+ThoughtMeter is open-source and currently distributed **signed but without
+Apple notarization** (notarization requires a paid Apple Developer membership
+the project doesn't have yet). macOS will therefore block the very first open.
+These steps work on every supported macOS version, and apply to both install
+methods above:
 
-1. In Applications, **right-click ThoughtMeter → Open → Open**.
-2. If that option doesn't appear: open the app once (it will be blocked),
-   then go to **System Settings ▸ Privacy & Security**, scroll down, and
-   click **Open Anyway**.
+1. Open **ThoughtMeter** from Applications. macOS says *"Apple could not
+   verify 'ThoughtMeter' is free of malware…"* — click **Done**. Do **not**
+   click *Move to Trash*.
+2. Open **System Settings ▸ Privacy & Security** and scroll down to the
+   **Security** section. Next to the line reading **"ThoughtMeter" was blocked
+   to protect your Mac**, click **Open Anyway**. The button appears only after one blocked
+   open attempt, so don't skip step 1.
+3. Confirm **Open Anyway** in the dialog and authenticate with Touch ID or
+   your login password.
+
+You approve each downloaded version once; normal launches afterwards are
+unaffected.
+
+On **macOS 14 (Sonoma) only**, right-clicking the app in Applications and
+choosing **Open → Open** does the same thing in one step. macOS 15 (Sequoia)
+and later removed that shortcut, which is why the System Settings path above
+is the primary one.
 
 Never disable Gatekeeper or macOS security protections system-wide — no app,
 including this one, should ask you to.
 
 ## Onboarding
+
+ThoughtMeter is a menu bar app with no Dock icon: after this first run you
+find it by its icon at the top right of the screen, not in the Dock or with
+⌘-Tab. Onboarding opens by itself on first launch.
 
 1. **Input Monitoring** — ThoughtMeter counts keystrokes, so macOS requires
    this permission. Onboarding takes you to
@@ -63,7 +82,11 @@ including this one, should ask you to.
    the AI apps/domains you want, or *All recognized AI tools*.
 3. **Launch at login** — optional, off by default.
 4. **Chrome extension** — optional; only needed to count typing on selected
-   AI websites. See [extensions/chrome/README.md](../extensions/chrome/README.md).
+   AI websites. Install **ThoughtMeter Connector** from the
+   [Chrome Web Store](https://chromewebstore.google.com/detail/thoughtmeter-connector/omhnbpfiapchifodmobgeglhgpgolmhn),
+   click **Register Connector** in **Settings ▸ Chrome**, then quit and reopen
+   Chrome. What the extension does and doesn't do:
+   [extensions/chrome/README.md](../extensions/chrome/README.md).
 
 ## Verifying it works
 

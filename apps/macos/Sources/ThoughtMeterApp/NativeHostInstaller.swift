@@ -3,8 +3,10 @@ import ThoughtMeterKit
 
 /// Release-time configuration. The production Chrome extension ID is injected
 /// into Info.plist by the packaging scripts (single source:
-/// packaging/release-config.sh). A development extension ID can be set in
-/// Settings ▸ Chrome for unpacked-extension testing.
+/// packaging/release-config.sh). Contributors testing a locally loaded
+/// extension set a development ID with
+/// `defaults write org.thoughtmeter.app devChromeExtensionID <ID>`
+/// (documented in CONTRIBUTING.md).
 enum ReleaseConfig {
     static var productionExtensionID: String? {
         guard let value = Bundle.main.object(forInfoDictionaryKey: "TMChromeExtensionID") as? String,

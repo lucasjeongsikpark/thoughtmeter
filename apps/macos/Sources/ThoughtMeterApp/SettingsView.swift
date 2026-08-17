@@ -130,7 +130,6 @@ private struct DataSettings: View {
 
 private struct ChromeSettings: View {
     @EnvironmentObject private var coordinator: AppCoordinator
-    @State private var devExtensionID = ReleaseConfig.developmentExtensionID ?? ""
     @State private var statusMessage: String?
 
     var body: some View {
@@ -167,26 +166,9 @@ private struct ChromeSettings: View {
                 .padding(.vertical, 2)
 
                 if ReleaseConfig.productionExtensionID == nil {
-                    Text("This build carries no Chrome Web Store extension ID, so registering here cannot authorize the store extension — that path works in release builds. Use the development flow below instead.")
+                    Text("This build carries no Chrome Web Store extension ID, so registering here cannot authorize the store extension — that path works in release builds. Contributors building from source: see CONTRIBUTING.md, “Developing the Chrome extension”.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-                }
-
-                DisclosureGroup("Development (unpacked extension)") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        setupStep(1, "In Chrome, open a new tab and go to  chrome://extensions , then turn on “Developer mode” (top right).")
-                        setupStep(2, "Click “Load unpacked” and choose the  extensions/chrome  folder inside the ThoughtMeter repository.")
-                        setupStep(3, "Copy the ID shown on the ThoughtMeter Connector card, paste it below, and click “Save ID & Register”.")
-                        setupStep(4, "Quit Chrome completely (⌘Q) and reopen it.")
-                        HStack {
-                            TextField("Extension ID from chrome://extensions", text: $devExtensionID)
-                                .onSubmit { saveDevID() }
-                            Button("Save ID & Register") { saveDevID() }
-                                .disabled(devExtensionID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                          && ReleaseConfig.productionExtensionID == nil)
-                        }
-                    }
-                    .padding(.top, 6)
                 }
             }
 
@@ -206,7 +188,7 @@ private struct ChromeSettings: View {
             }
 
             Section("Troubleshooting") {
-                Text("Still “not connected”? In order: 1) confirm the connector manifest is registered above, 2) confirm the allowed extension IDs above match the ID on the ThoughtMeter Connector card at chrome://extensions, 3) reload the extension, 4) quit and reopen Chrome. If you moved or rebuilt ThoughtMeter.app, register again — the manifest points at the app's location on disk.")
+                Text("Still “not connected”? In order: 1) confirm the connector manifest reads “Registered” above, and click “Register Connector” if it doesn't, 2) confirm the allowed extension IDs above match the ID on the ThoughtMeter Connector card at chrome://extensions, 3) reload the extension, 4) quit and reopen Chrome. If you moved or rebuilt ThoughtMeter.app, click “Register Connector” again — the manifest points at the app's location on disk.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -255,19 +237,6 @@ private struct ChromeSettings: View {
         } catch {
             statusMessage = String(describing: error)
         }
-    }
-
-    private func saveDevID() {
-        // Newlines matter here: text pasted from chrome://extensions often
-        // carries a trailing one, and Chrome rejects the whole manifest over
-        // a single malformed allowed_origins entry.
-        let trimmed = devExtensionID.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmed.isEmpty && !ChromeExtensionID.isPlausible(trimmed) {
-            statusMessage = "That doesn't look like a Chrome extension ID — expected 32 letters (a–p), as shown on the ThoughtMeter Connector card at chrome://extensions. Nothing was changed."
-            return
-        }
-        ReleaseConfig.developmentExtensionID = trimmed.isEmpty ? nil : trimmed
-        runInstall()
     }
 }
 

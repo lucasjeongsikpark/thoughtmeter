@@ -2,9 +2,18 @@
 
 ## macOS blocks the app on first launch
 
-Expected — releases are not notarized (see README). Right-click the app →
-**Open** → **Open**, or System Settings ▸ Privacy & Security → **Open Anyway**.
-Never disable Gatekeeper globally.
+Expected — releases are signed but not notarized (see README). Approve the app
+once:
+
+1. Open ThoughtMeter from Applications and click **Done** on the "Apple could
+   not verify…" dialog — not *Move to Trash*.
+2. **System Settings ▸ Privacy & Security** → scroll to **Security** →
+   **Open Anyway** (the button shows up only after that blocked attempt).
+3. Confirm **Open Anyway** and authenticate.
+
+On macOS 14 (Sonoma) only, right-click the app → **Open** → **Open** is a
+one-step equivalent; macOS 15 and later removed it. Never disable Gatekeeper
+globally.
 
 ## Nothing is being counted
 
@@ -38,12 +47,10 @@ Monitoring dev loop" for a stable identity that survives rebuilds.
 
 ## The Chrome extension says "Not connected"
 
-1. ThoughtMeter app: Settings ▸ Chrome → **Save ID & Register** (the manifest
-   must point at the app's current location — re-register after moving it).
+1. ThoughtMeter app: Settings ▸ Chrome → **Register Connector** (the manifest
+   must point at the app's current location — register again after moving it).
 2. `chrome://extensions` → reload the ThoughtMeter Connector.
 3. Restart Chrome completely (`⌘Q`).
-4. Unpacked/dev extension: its ID must be saved in Settings ▸ Chrome
-   ("Save ID & Register").
 
 ## Counts look attributed to the wrong Chrome site
 

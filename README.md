@@ -54,12 +54,30 @@ brew install --cask lucasjeongsikpark/thoughtmeter/thoughtmeter
 
 Homebrew 6.0+ refuses casks from third-party taps until you trust them. If you see `Refusing to load cask … from untrusted tap`, run `brew trust lucasjeongsikpark/thoughtmeter` and install again — details in [docs/INSTALL.md](docs/INSTALL.md).
 
+The **First launch** steps below apply to Homebrew installs too.
+
 ### Direct download
 
 1. Download `ThoughtMeter-x.y.z.dmg` from [Releases](../../releases), and optionally verify it against `SHA256SUMS.txt` (`shasum -a 256 --ignore-missing -c SHA256SUMS.txt` — the flag skips listed files you didn't download).
-2. Open the DMG and drag **ThoughtMeter** to Applications.
-3. First launch: ThoughtMeter is open-source and currently **not notarized** (no paid Apple Developer membership yet), so macOS will block the first open. Right-click the app → **Open** → **Open**, or approve it under **System Settings ▸ Privacy & Security**. Please don't disable Gatekeeper globally — it protects you.
-4. Follow onboarding: grant **Input Monitoring** (required to count keystrokes), pick your tools, and you're done.
+2. Open the DMG and drag **ThoughtMeter** to your **Applications** folder.
+3. Eject the DMG (drag it to the Trash in the Dock, or press ⌘E in Finder).
+
+### First launch
+
+ThoughtMeter is open-source and **signed but not notarized** — Apple notarization requires a paid Apple Developer membership the project doesn't have yet. macOS therefore blocks the first open, and you approve the app once. This is the same on both install methods.
+
+1. Open **ThoughtMeter** from Applications. macOS shows *"Apple could not verify 'ThoughtMeter' is free of malware…"* — click **Done**. Do **not** click *Move to Trash*.
+2. Open **System Settings ▸ Privacy & Security**, scroll down to the **Security** section, and next to the line reading **"ThoughtMeter" was blocked to protect your Mac**, click **Open Anyway**. (This button appears only after you've tried to open the app once, which is why step 1 comes first.)
+3. Confirm **Open Anyway** in the dialog, then authenticate with Touch ID or your login password.
+
+You do this once per downloaded version, not every launch. On macOS 14 (Sonoma) only, right-click the app → **Open** → **Open** is a faster equivalent; that shortcut no longer exists on macOS 15 (Sequoia) and later. Please don't disable Gatekeeper globally — it protects you.
+
+### First use
+
+1. ThoughtMeter lives in the **menu bar** and has no Dock icon — look for its icon at the top right of the screen. Onboarding opens automatically on first launch.
+2. Grant **Input Monitoring** when onboarding asks: **System Settings ▸ Privacy & Security ▸ Input Monitoring** → enable ThoughtMeter, and quit and reopen the app if macOS asks. The permission lets ThoughtMeter see that a key was pressed; it counts events and never reads which keys they were.
+3. Pick the tools and websites you want counted.
+4. Optional: install **ThoughtMeter Connector** from the Chrome Web Store, click **Register Connector** in Settings ▸ Chrome, then quit and reopen Chrome.
 
 Full details, including why each permission is needed: [docs/INSTALL.md](docs/INSTALL.md).
 
@@ -70,7 +88,7 @@ Only needed if you want to count typing on selected AI websites. It reads the UR
 Install **ThoughtMeter Connector** from the Chrome Web Store:
 <https://chromewebstore.google.com/detail/thoughtmeter-connector/omhnbpfiapchifodmobgeglhgpgolmhn>
 
-Release builds already know the store extension, so there is nothing to configure. Setup notes and the development (unpacked) route: [extensions/chrome/README.md](extensions/chrome/README.md). Exactly what the extension does and does not handle: [PRIVACY.md](PRIVACY.md).
+Release builds already know the store extension, so there is nothing to configure — install it, click **Register Connector** in Settings ▸ Chrome, then quit and reopen Chrome. What the extension does and doesn't do: [extensions/chrome/README.md](extensions/chrome/README.md). Exactly what it does and does not handle: [PRIVACY.md](PRIVACY.md).
 
 ## Privacy
 

@@ -37,18 +37,12 @@ From the Chrome Web Store:
 <https://chromewebstore.google.com/detail/thoughtmeter-connector/omhnbpfiapchifodmobgeglhgpgolmhn>
 
 Release builds of the macOS app already authorize the store extension, so
-there is no ID to copy and nothing to configure — install it, then quit and
-reopen Chrome so it picks up the connector registration.
+there is no ID to copy and nothing to configure — install it, click
+**Register Connector** in the app's Settings ▸ Chrome, then quit and reopen
+Chrome so it picks up the connector registration.
 
-## Development install
-
-1. Build and run the ThoughtMeter app once (`make dev` in the repo root).
-2. `chrome://extensions` → enable Developer mode → "Load unpacked" → select
-   this `extensions/chrome/` directory.
-3. Copy the extension ID Chrome assigned.
-4. In ThoughtMeter: Settings ▸ Chrome → paste the ID → "Save ID & Register".
-   (Or run `scripts/install-native-host.sh --dev-id <ID>` from the repo root.)
-5. Reload the extension. The popup should show "Connected".
+Contributors running this extension from source: see
+[CONTRIBUTING.md](../../CONTRIBUTING.md), "Developing the Chrome extension".
 
 ## Tests
 

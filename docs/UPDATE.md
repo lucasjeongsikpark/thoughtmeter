@@ -23,7 +23,10 @@ brew upgrade --cask thoughtmeter
 ## After updating: permissions
 
 Releases are **not notarized**, so macOS may ask you to approve the app again
-on first launch (right-click → Open, or Privacy & Security → Open Anyway).
+on first launch: open it once, then System Settings ▸ Privacy & Security →
+**Open Anyway** → confirm and authenticate. On macOS 14 (Sonoma) only,
+right-click → **Open** → **Open** is a one-step equivalent; macOS 15 and later
+removed it. See [INSTALL.md](INSTALL.md#first-launch) for the full steps.
 
 **Input Monitoring normally carries over.** Releases are signed with a stable
 certificate, which keeps the app's code identity the same from version to

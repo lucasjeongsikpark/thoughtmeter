@@ -51,6 +51,36 @@ same reason, so users grant the permission once rather than after every
 update. Builds fall back to ad-hoc when that identity is absent from your
 keychain, so cloning and running `make build` works without any setup.
 
+### Developing the Chrome extension
+
+The app's Settings ▸ Chrome only covers the Chrome Web Store extension. To run
+the extension from this repository, load it unpacked and tell the app about the
+ID Chrome assigns it:
+
+1. Build and run the app once (`make dev`), then open `chrome://extensions`,
+   turn on **Developer mode**, click **Load unpacked**, and choose
+   `extensions/chrome/`.
+2. Copy the extension ID shown on the ThoughtMeter Connector card.
+3. Store that ID in the app's preferences:
+   ```bash
+   defaults write org.thoughtmeter.app devChromeExtensionID <ID>
+   ```
+   This step is not optional. On every launch the app repairs the native
+   messaging manifest from the IDs it knows about (the Info.plist production ID
+   plus this preference), so a development origin registered only by the script
+   below is stripped again the next time the app starts.
+4. Register the manifest — either
+   ```bash
+   scripts/install-native-host.sh --dev-id <ID>
+   ```
+   or relaunch the app and click **Register Connector** in Settings ▸ Chrome,
+   which now includes the saved development ID.
+5. Reload the extension at `chrome://extensions` and restart Chrome completely
+   (`⌘Q`). The extension popup should read "Connected".
+
+`defaults delete org.thoughtmeter.app devChromeExtensionID` removes the
+development origin again.
+
 ### Why a custom test runner?
 
 Command Line Tools ship neither XCTest nor swift-testing, so tests run
