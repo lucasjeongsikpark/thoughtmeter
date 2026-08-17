@@ -24,3 +24,5 @@ node_modules/
 
 # macOS temporary rename artifacts (appear during sips/Finder/hdiutil work)
 .!*!*
+
+tasks/
