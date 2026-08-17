@@ -5,6 +5,24 @@ Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.3.1] — 2026-08-16
+
+### Removed
+- The unpacked-extension developer flow is gone from Settings ▸ Chrome and from
+  the user-facing documentation. Settings ▸ Chrome now only describes the
+  Chrome Web Store path, with no extension ID to paste. The full contributor
+  flow — including the `defaults write org.thoughtmeter.app
+  devChromeExtensionID` step the app needs in order to keep a development
+  origin through its manifest repair — now lives in CONTRIBUTING.md.
+
+### Changed
+- Install and first-launch documentation is rewritten around the System
+  Settings ▸ Privacy & Security **Open Anyway** flow, which works on every
+  supported macOS version. Right-click → Open is now presented only as a
+  macOS 14 (Sonoma) shortcut, since macOS 15 removed it. README also gained a
+  first-use walkthrough (menu bar orientation, Input Monitoring, tool
+  selection, optional Chrome extension).
+
 ## [0.3.0] — 2026-08-16
 
 ### Added
