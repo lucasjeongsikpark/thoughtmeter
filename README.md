@@ -33,9 +33,9 @@ ThoughtMeter deliberately does **not** measure thinking, effort, productivity, o
 | Kind | Recognized out of the box |
 |---|---|
 | AI apps | ChatGPT, Claude, Perplexity, Microsoft Copilot, Grok, Raycast, LM Studio, Ollama, Jan |
-| AI-assisted editors | Visual Studio Code (+ Insiders, VSCodium), Cursor, Windsurf, Zed (+ Preview), Trae, Xcode, IntelliJ IDEA (+ CE), PyCharm (+ CE), WebStorm |
+| AI-assisted editors | Visual Studio Code (+ Insiders, VSCodium), Cursor, Windsurf, Zed (+ Preview), Trae, Orca, Xcode, IntelliJ IDEA (+ CE), PyCharm (+ CE), WebStorm |
 | Terminals | Terminal, iTerm2, Warp, Ghostty, Alacritty, kitty, WezTerm |
-| Chrome domains | chatgpt.com, claude.ai, gemini.google.com, aistudio.google.com, notebooklm.google.com, perplexity.ai, copilot.microsoft.com, grok.com, chat.deepseek.com, chat.mistral.ai, poe.com, character.ai, meta.ai, chat.qwen.ai, kimi.com, wrtn.ai, clova-x.naver.com, v0.dev, lovable.dev, bolt.new, replit.com, midjourney.com |
+| Chrome domains | chatgpt.com, claude.ai, gemini.google.com, aistudio.google.com, notebooklm.google.com, perplexity.ai, copilot.microsoft.com, grok.com, chat.deepseek.com, chat.mistral.ai, poe.com, character.ai, meta.ai, chat.qwen.ai, kimi.com, wrtn.ai, clova-x.naver.com, v0.dev, lovable.dev, bolt.new, replit.com, midjourney.com, manus.im, genspark.ai, you.com, t3.chat, chat.z.ai, doubao.com, yuanbao.tencent.com, yiyan.baidu.com |
 | Custom | Any macOS app (picker) and any domain you add |
 
 Only recognized apps that are actually installed on your Mac are shown, and in the default mode nothing is tracked until you explicitly select it.
@@ -79,8 +79,8 @@ The one-paragraph version: ThoughtMeter stores **minute-level aggregate counts p
 ## Dashboard
 
 - **Today** — summary cards (total, vs 7-day average, top source, peak hour), hourly chart, per-source bars, 7-day trend
-- **7 Days / 30 Days** — daily totals and per-source breakdown
-- **Proof of Thought** — today's trace as a 1200×630 PNG, rendered locally and saved wherever you choose
+- **7 Days / 30 Days** — daily totals, per-source breakdown, and the range's peak hour (per-day average)
+- **Proof of Thought** — your Today, 7-day, or 30-day trace as a 1200×630 PNG, rendered locally and saved wherever you choose
 
 <img src="docs/assets/dashboard-today.png" alt="Today view: total keystrokes, comparison with the 7-day average, top source, peak hour, an hourly chart, per-source bars, and a 7-day trend" width="900">
 

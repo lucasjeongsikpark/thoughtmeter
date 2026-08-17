@@ -5,6 +5,8 @@ Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
 ## [Unreleased]
 
+## [0.3.0] — 2026-08-16
+
 ### Added
 - The Proof of Thought card can now be shared for Today, 7 Days, or 30 Days.
   The sheet has its own range picker, starts on the range the dashboard is

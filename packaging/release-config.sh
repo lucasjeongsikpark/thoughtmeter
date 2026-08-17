@@ -3,7 +3,7 @@
 # Every packaging script sources this file — edit values here only.
 
 # macOS app version for the next release, injected into Info.plist at build time.
-VERSION="0.2.1"
+VERSION="0.3.0"
 
 # The Chrome extension carries its own version in its manifest: it ships to the
 # Web Store on its own cadence and is NOT tied to VERSION above. Read it here so
