@@ -139,8 +139,10 @@ same Developer ID will not ask again.
 EOF
 else
   cat >> "$NOTES" <<EOF
-- Not notarized (no Apple Developer Program): on first launch use
-  right-click → Open, or approve in System Settings → Privacy & Security
+- Not notarized (no Apple Developer Program): approve the first launch once —
+  open the app, click Done, then System Settings ▸ Privacy & Security →
+  **Open Anyway**. (On macOS 14 Sonoma only, right-click → Open also works;
+  macOS 15 removed that shortcut.) Full steps: the README's "First launch"
 - Requires the Input Monitoring permission (counting only — key identities
   are never recorded); granting it once carries over to later versions
 EOF
