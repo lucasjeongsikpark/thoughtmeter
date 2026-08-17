@@ -164,15 +164,6 @@ enum NativeHostInstaller {
         }
     }
 
-    /// Origins listed in the currently installed manifest (for status UI).
-    static func installedOrigins() -> [String] {
-        guard let data = try? Data(contentsOf: manifestURL),
-              let manifest = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let origins = manifest["allowed_origins"] as? [String]
-        else { return [] }
-        return origins
-    }
-
     static func uninstall() throws {
         let path = manifestURL.path
         // Path safety: only ever delete our own manifest file.

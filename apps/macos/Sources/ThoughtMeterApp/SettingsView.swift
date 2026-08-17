@@ -137,11 +137,6 @@ private struct ChromeSettings: View {
             Section("Status") {
                 LabeledContent("Extension", value: coordinator.chromeStateDescription)
                 LabeledContent("Connector manifest", value: NativeHostInstaller.isInstalled ? "Registered" : "Not registered")
-                if NativeHostInstaller.isInstalled {
-                    let origins = NativeHostInstaller.installedOrigins()
-                    LabeledContent("Allowed extension IDs",
-                                   value: origins.isEmpty ? "none" : origins.map(shortOrigin).joined(separator: ", "))
-                }
                 Button("Refresh Status") { coordinator.refreshNow() }
             }
 
@@ -188,7 +183,7 @@ private struct ChromeSettings: View {
             }
 
             Section("Troubleshooting") {
-                Text("Still “not connected”? In order: 1) confirm the connector manifest reads “Registered” above, and click “Register Connector” if it doesn't, 2) confirm the allowed extension IDs above match the ID on the ThoughtMeter Connector card at chrome://extensions, 3) reload the extension, 4) quit and reopen Chrome. If you moved or rebuilt ThoughtMeter.app, click “Register Connector” again — the manifest points at the app's location on disk.")
+                Text("Still “not connected”? In order: 1) click “Register Connector” above — it writes a fresh manifest either way, 2) reload the extension at chrome://extensions, 3) quit and reopen Chrome. If you moved or rebuilt ThoughtMeter.app, click “Register Connector” again — the manifest points at the app's location on disk.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -215,12 +210,6 @@ private struct ChromeSettings: View {
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
         }
-    }
-
-    private func shortOrigin(_ origin: String) -> String {
-        origin
-            .replacingOccurrences(of: "chrome-extension://", with: "")
-            .replacingOccurrences(of: "/", with: "")
     }
 
     /// Hands the URL to the user's default browser. ThoughtMeter itself makes
