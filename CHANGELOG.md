@@ -5,6 +5,25 @@ Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
 ## [Unreleased]
 
+### Added
+- The Proof of Thought card can now be shared for Today, 7 Days, or 30 Days.
+  The sheet has its own range picker, starts on the range the dashboard is
+  showing, and its headline names the window the numbers cover.
+- "Peak hour" is now shown for the 7- and 30-day ranges too, where it reads
+  out the busiest hour of the day across the range with its per-day average.
+- More recognized AI services: the Orca desktop app, and Manus, Genspark,
+  You.com, T3 Chat, Z.ai, Doubao, Tencent Yuanbao, and ERNIE Bot on the web.
+
+### Changed
+- Settings ▸ Chrome now leads with the released Chrome Web Store extension —
+  the listing's address with a button to open it, then one "Register
+  Connector" step that needs no extension ID. The unpacked-extension flow is
+  kept as a "Development" section. Onboarding's Chrome step says the same.
+- The 30-day "By day" chart labels evenly spaced dates instead of all 30, so
+  the axis no longer overlaps itself at narrow window widths.
+- The share button is enabled whenever the last 30 days contain any input,
+  rather than only when today does.
+
 ## [0.2.1] — 2026-08-14
 
 Fixes to the Chrome connector's reliability and to two privacy claims that were

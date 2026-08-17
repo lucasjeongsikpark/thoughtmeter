@@ -321,7 +321,7 @@ private struct ChromeStep: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text("1. Register the local connector below.")
-                Text("2. Install the ThoughtMeter Connector extension in Chrome — Settings ▸ Chrome has a guided 4-step setup.")
+                Text("2. Install the ThoughtMeter Connector extension from the Chrome Web Store — Settings ▸ Chrome has the link and the full setup.")
                 Text("3. Come back here — the status updates automatically.")
             }
             .font(.callout)

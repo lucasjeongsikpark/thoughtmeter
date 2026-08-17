@@ -148,22 +148,46 @@ private struct ChromeSettings: View {
 
             Section("Set up") {
                 VStack(alignment: .leading, spacing: 8) {
-                    setupStep(1, "In Chrome, open a new tab and go to  chrome://extensions , then turn on “Developer mode” (top right).")
-                    setupStep(2, "Click “Load unpacked” and choose the  extensions/chrome  folder inside the ThoughtMeter repository.")
-                    setupStep(3, "Copy the ID shown on the ThoughtMeter Connector card, paste it below, and click “Save ID & Register”.")
-                    setupStep(4, "Quit Chrome completely (⌘Q) and reopen it — Chrome reads the connector registration at launch.")
+                    setupStep(1, "Install “ThoughtMeter Connector” from the Chrome Web Store.")
+                    HStack(alignment: .firstTextBaseline, spacing: 8) {
+                        Text(ReleaseConfig.chromeWebStoreURLString)
+                            .font(.caption.monospaced())
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 8)
+                        Button("Open") { openWebStoreListing() }
+                            .controlSize(.small)
+                    }
+                    .padding(.leading, 18)
+                    setupStep(2, "Click “Register Connector” below — the Web Store extension needs no ID.")
+                    Button("Register Connector") { runInstall() }
+                        .padding(.leading, 18)
+                    setupStep(3, "Quit Chrome completely (⌘Q) and reopen it — Chrome reads the connector registration at launch.")
                 }
                 .padding(.vertical, 2)
-                HStack {
-                    TextField("Extension ID from chrome://extensions", text: $devExtensionID)
-                        .onSubmit { saveDevID() }
-                    Button("Save ID & Register") { saveDevID() }
-                        .disabled(devExtensionID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                                  && ReleaseConfig.productionExtensionID == nil)
+
+                if ReleaseConfig.productionExtensionID == nil {
+                    Text("This build carries no Chrome Web Store extension ID, so registering here cannot authorize the store extension — that path works in release builds. Use the development flow below instead.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                Text("The steps above are only for an unpacked development copy. Installing ThoughtMeter Connector from the Chrome Web Store needs no ID — release builds authorize the store extension automatically.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+
+                DisclosureGroup("Development (unpacked extension)") {
+                    VStack(alignment: .leading, spacing: 8) {
+                        setupStep(1, "In Chrome, open a new tab and go to  chrome://extensions , then turn on “Developer mode” (top right).")
+                        setupStep(2, "Click “Load unpacked” and choose the  extensions/chrome  folder inside the ThoughtMeter repository.")
+                        setupStep(3, "Copy the ID shown on the ThoughtMeter Connector card, paste it below, and click “Save ID & Register”.")
+                        setupStep(4, "Quit Chrome completely (⌘Q) and reopen it.")
+                        HStack {
+                            TextField("Extension ID from chrome://extensions", text: $devExtensionID)
+                                .onSubmit { saveDevID() }
+                            Button("Save ID & Register") { saveDevID() }
+                                .disabled(devExtensionID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                                          && ReleaseConfig.productionExtensionID == nil)
+                        }
+                    }
+                    .padding(.top, 6)
+                }
             }
 
             Section("Tracked domains") {
@@ -182,7 +206,7 @@ private struct ChromeSettings: View {
             }
 
             Section("Troubleshooting") {
-                Text("Still “not connected”? In order: 1) confirm the connector manifest is registered above, 2) confirm the extension ID above matches chrome://extensions exactly, 3) reload the extension, 4) quit and reopen Chrome. If you moved or rebuilt ThoughtMeter.app, register again — the manifest points at the app's location on disk.")
+                Text("Still “not connected”? In order: 1) confirm the connector manifest is registered above, 2) confirm the allowed extension IDs above match the ID on the ThoughtMeter Connector card at chrome://extensions, 3) reload the extension, 4) quit and reopen Chrome. If you moved or rebuilt ThoughtMeter.app, register again — the manifest points at the app's location on disk.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }
@@ -215,6 +239,13 @@ private struct ChromeSettings: View {
         origin
             .replacingOccurrences(of: "chrome-extension://", with: "")
             .replacingOccurrences(of: "/", with: "")
+    }
+
+    /// Hands the URL to the user's default browser. ThoughtMeter itself makes
+    /// no network requests — the browser does the fetching.
+    private func openWebStoreListing() {
+        guard let url = URL(string: ReleaseConfig.chromeWebStoreURLString) else { return }
+        NSWorkspace.shared.open(url)
     }
 
     private func runInstall() {

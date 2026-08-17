@@ -8,24 +8,44 @@ import ThoughtMeterKit
 struct ShareCardSheet: View {
     @EnvironmentObject private var coordinator: AppCoordinator
     @Environment(\.dismiss) private var dismiss
-    let stats: DashboardStats
+    /// Loads one range's stats on demand. Supplied by the dashboard so the
+    /// sheet can follow its own picker without duplicating the query logic.
+    private let loadStats: (DashboardRange) -> DashboardStats
+    @State private var range: DashboardRange
+    @State private var stats: DashboardStats
     @State private var includeSources = true
 
     private let previewScale: CGFloat = 0.4
+
+    init(initialRange: DashboardRange, loadStats: @escaping (DashboardRange) -> DashboardStats) {
+        self.loadStats = loadStats
+        _range = State(initialValue: initialRange)
+        _stats = State(initialValue: loadStats(initialRange))
+    }
 
     var body: some View {
         VStack(spacing: 14) {
             Text("Share your Proof of Thought")
                 .font(.headline)
-            Text("Today’s trace, rendered locally as a 1200×630 image. Nothing is uploaded — you choose where it goes.")
+            Text("Rendered locally as a 1200×630 image. Nothing is uploaded — you choose where it goes.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+
+            Picker("Range", selection: $range) {
+                ForEach(DashboardRange.allCases) { range in
+                    Text(range.rawValue).tag(range)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            .frame(width: 260)
+            .onChange(of: range) { _, newValue in stats = loadStats(newValue) }
 
             // Preview at 40%: the card lays out at its full fixed size, the
             // scale effect shrinks the rendering, and the outer frame crops
             // the (now matching) visual bounds — without this, SwiftUI clips
             // a zoomed-in center region instead of showing the whole card.
-            ShareCardView(stats: stats, includeSources: includeSources)
+            ShareCardView(stats: stats, range: range, includeSources: includeSources)
                 .scaleEffect(previewScale)
                 .frame(width: 1200 * previewScale, height: 630 * previewScale)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -36,8 +56,10 @@ struct ShareCardSheet: View {
             HStack {
                 Button("Cancel") { dismiss() }
                 Spacer()
+                // A card reading "0 keystrokes" is not proof of anything.
                 Button("Save Image…") { save() }
                     .keyboardShortcut(.defaultAction)
+                    .disabled(stats.isEmpty)
             }
         }
         .padding(20)
@@ -45,7 +67,8 @@ struct ShareCardSheet: View {
     }
 
     private func save() {
-        let renderer = ImageRenderer(content: ShareCardView(stats: stats, includeSources: includeSources)
+        let renderer = ImageRenderer(content: ShareCardView(stats: stats, range: range,
+                                                            includeSources: includeSources)
             .frame(width: 1200, height: 630))
         renderer.scale = 1.0
         guard let nsImage = renderer.nsImage,
@@ -76,6 +99,8 @@ struct ShareCardSheet: View {
 /// The card itself. Fixed light design so the exported PNG is predictable.
 struct ShareCardView: View {
     let stats: DashboardStats
+    /// Names the window the numbers cover; the stats must be loaded for it.
+    let range: DashboardRange
     let includeSources: Bool
 
     var body: some View {
@@ -83,7 +108,7 @@ struct ShareCardView: View {
             Color(red: 0.97, green: 0.97, blue: 0.955)
 
             VStack(alignment: .leading, spacing: 0) {
-                Text("Today’s Thought Input")
+                Text(range.headline)
                     .font(.system(size: 34, weight: .medium))
                     .foregroundStyle(Color.black.opacity(0.55))
 

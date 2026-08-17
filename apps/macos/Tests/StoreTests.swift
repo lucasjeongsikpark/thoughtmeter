@@ -70,6 +70,43 @@ let storeTests: [TC] = [
             t.expectEqual(hours.reduce(0, +), 3)
         }
     },
+    TC("hourly totals sum across several local dates") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let id = try store.upsertSource(SourceDescriptor(kind: .app, identifier: "x.y.z",
+                                                             displayName: "X", isBuiltin: false), now: 0)
+            // Two days, same local hour 12 through different offsets — the
+            // range's peak hour must add them, not pick one.
+            let dayOne: Int64 = 86_400 * 100
+            try store.recordActivity([
+                // 10:00 UTC, +2h → local 12
+                .init(bucketStart: dayOne + 10 * 3600, sourceID: id, keystrokes: 3,
+                      localDate: "1970-04-11", tzOffsetSeconds: 7200),
+                // 19:00 UTC, -7h → local 12 (next stored day)
+                .init(bucketStart: dayOne + 86_400 + 19 * 3600, sourceID: id, keystrokes: 4,
+                      localDate: "1970-04-12", tzOffsetSeconds: -25_200),
+                // 08:00 UTC, +0 → local 8, one of the two days
+                .init(bucketStart: dayOne + 8 * 3600, sourceID: id, keystrokes: 5,
+                      localDate: "1970-04-11", tzOffsetSeconds: 0),
+                // A day outside the requested range must not be counted.
+                .init(bucketStart: dayOne + 3 * 86_400 + 12 * 3600, sourceID: id, keystrokes: 99,
+                      localDate: "1970-04-14", tzOffsetSeconds: 0),
+            ])
+            let hours = try store.hourlyTotals(localDates: ["1970-04-11", "1970-04-12"])
+            t.expectEqual(hours[12], 7, "same local hour on two days must sum")
+            t.expectEqual(hours[8], 5)
+            t.expectEqual(hours.reduce(0, +), 12, "dates outside the range are excluded")
+            t.expectEqual(hours.count, 24)
+        }
+    },
+    TC("hourly totals for no dates are all zero") { t in
+        try withTempDirectory { dir in
+            let store = try makeStore(in: dir)
+            let hours = try store.hourlyTotals(localDates: [])
+            t.expectEqual(hours.count, 24)
+            t.expectEqual(hours.reduce(0, +), 0)
+        }
+    },
     TC("delete all activity keeps sources") { t in
         try withTempDirectory { dir in
             let store = try makeStore(in: dir)

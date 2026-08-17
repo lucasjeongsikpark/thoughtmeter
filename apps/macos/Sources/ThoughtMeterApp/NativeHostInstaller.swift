@@ -22,6 +22,12 @@ enum ReleaseConfig {
         }
     }
 
+    /// The released Chrome Web Store listing for ThoughtMeter Connector.
+    /// Shown (and opened in the user's browser) by Settings ▸ Chrome — the
+    /// app itself never fetches it.
+    static let chromeWebStoreURLString =
+        "https://chromewebstore.google.com/detail/thoughtmeter-connector/omhnbpfiapchifodmobgeglhgpgolmhn"
+
     static var repositoryURLString: String {
         (Bundle.main.object(forInfoDictionaryKey: "TMRepositoryURL") as? String)
             ?? "github.com/lucasjeongsikpark/thoughtmeter"

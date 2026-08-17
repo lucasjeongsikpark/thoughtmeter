@@ -81,6 +81,7 @@ public enum RecognizedCatalog {
         App(displayName: "Zed", bundleID: "dev.zed.Zed"),
         App(displayName: "Zed Preview", bundleID: "dev.zed.Zed-Preview"),
         App(displayName: "Trae", bundleID: "com.trae.app"),
+        App(displayName: "Orca", bundleID: "com.stablyai.orca"),
         App(displayName: "Xcode", bundleID: "com.apple.dt.Xcode"),
         App(displayName: "IntelliJ IDEA", bundleID: "com.jetbrains.intellij"),
         App(displayName: "IntelliJ IDEA CE", bundleID: "com.jetbrains.intellij.ce"),
@@ -122,6 +123,14 @@ public enum RecognizedCatalog {
         ("Bolt", "bolt.new"),
         ("Replit", "replit.com"),
         ("Midjourney", "midjourney.com"),
+        ("Manus", "manus.im"),
+        ("Genspark", "genspark.ai"),
+        ("You.com", "you.com"),
+        ("T3 Chat", "t3.chat"),
+        ("Z.ai", "chat.z.ai"),
+        ("Doubao", "doubao.com"),
+        ("Tencent Yuanbao", "yuanbao.tencent.com"),
+        ("ERNIE Bot", "yiyan.baidu.com"),
     ]
 
     /// Domain → desktop-app sibling. Used only for UI, as the middle step of

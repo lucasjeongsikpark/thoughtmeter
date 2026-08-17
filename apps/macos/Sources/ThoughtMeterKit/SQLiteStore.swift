@@ -297,6 +297,34 @@ public final class SQLiteStore {
         }
     }
 
+    /// Keystrokes per local hour (0–23) summed across several local dates —
+    /// the Peak hour stat for the 7- and 30-day ranges. Uses the same stored
+    /// timezone offset as the single-date version, so a range spanning a
+    /// timezone change still buckets each day by the hour it was typed in.
+    public func hourlyTotals(localDates: [String]) throws -> [Int] {
+        guard !localDates.isEmpty else { return [Int](repeating: 0, count: 24) }
+        return try queue.sync {
+            let placeholders = Array(repeating: "?", count: localDates.count).joined(separator: ",")
+            let sql = """
+            SELECT ((bucket_utc_start + tz_offset_seconds) % 86400) / 3600 AS hour, SUM(keystrokes)
+            FROM activity WHERE local_date IN (\(placeholders)) GROUP BY hour
+            """
+            let statement = try prepareLocked(sql)
+            defer { sqlite3_finalize(statement) }
+            for (index, date) in localDates.enumerated() {
+                bindText(statement, Int32(index + 1), date)
+            }
+            var hours = [Int](repeating: 0, count: 24)
+            try stepRowsLocked(statement) {
+                let hour = Int(sqlite3_column_int64(statement, 0))
+                if (0..<24).contains(hour) {
+                    hours[hour] = Int(sqlite3_column_int64(statement, 1))
+                }
+            }
+            return hours
+        }
+    }
+
     public func totalsBySource(localDates: [String]) throws -> [(source: SourceRecord, keystrokes: Int)] {
         guard !localDates.isEmpty else { return [] }
         return try queue.sync {

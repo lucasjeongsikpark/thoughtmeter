@@ -16,6 +16,15 @@ enum DashboardRange: String, CaseIterable, Identifiable {
         case .month: return 30
         }
     }
+
+    /// Headline form, used by the Proof of Thought card.
+    var headline: String {
+        switch self {
+        case .today: return "Today’s Thought Input"
+        case .week: return "7-Day Thought Input"
+        case .month: return "30-Day Thought Input"
+        }
+    }
 }
 
 /// Everything one dashboard render needs, loaded off the live store.
@@ -37,7 +46,6 @@ struct DashboardView: View {
     @EnvironmentObject private var coordinator: AppCoordinator
     @State private var range: DashboardRange = .today
     @State private var stats = DashboardStats()
-    @State private var shareStats = DashboardStats()
     @State private var shareSheetShown = false
     @State private var shareAvailable = false
     /// Local date ("YYYY-MM-DD") being inspected after clicking a day in a
@@ -80,8 +88,14 @@ struct DashboardView: View {
         .onChange(of: range) { _, _ in reload() }
         .onReceive(refreshTimer) { _ in reload() }
         .sheet(isPresented: $shareSheetShown) {
-            ShareCardSheet(stats: shareStats)
-                .environmentObject(coordinator)
+            // The sheet owns its own range, so it loads stats on demand
+            // rather than receiving a fixed snapshot. An inspected past day
+            // has no matching card range — start such a share at Today.
+            ShareCardSheet(
+                initialRange: selectedDay == nil ? range : .today,
+                loadStats: { loadStats(for: $0) }
+            )
+            .environmentObject(coordinator)
         }
     }
 
@@ -125,15 +139,12 @@ struct DashboardView: View {
             .help("Refresh")
 
             Button {
-                // The card's headline is "Today's Thought Input", so it must
-                // always render today's stats — not the selected range's.
-                shareStats = range == .today ? stats : loadStats(for: .today)
                 shareSheetShown = true
             } label: {
                 Label("Share Proof of Thought", systemImage: "square.and.arrow.up")
             }
             .disabled(!shareAvailable)
-            .help("Share today's trace as an image")
+            .help("Share your Thought Input as an image")
 
             Button {
                 SettingsOpener.open()
@@ -185,11 +196,10 @@ struct DashboardView: View {
         } else {
             stats = loadStats(for: range)
         }
-        // The card always renders TODAY's stats (see the share button), so
-        // the button's empty-guard must check today too — the selected range,
-        // or an inspected past day, can have data while today is still zero.
-        let showingToday = selectedDay == nil && range == .today
-        shareAvailable = showingToday ? !stats.isEmpty : todayHasInput()
+        // The card can be shared for any of its three ranges, and 30 days is
+        // a superset of the other two — so the button is offered whenever
+        // there is anything at all to put on a card.
+        shareAvailable = recentInputExists()
     }
 
     /// One past day: the same shape as the Today view, for a fixed date.
@@ -206,10 +216,11 @@ struct DashboardView: View {
         return next
     }
 
-    private func todayHasInput() -> Bool {
+    /// Any input in the widest card range (30 days).
+    private func recentInputExists() -> Bool {
         guard let store = coordinator.store else { return false }
-        let today = LocalDateProvider().localDateString(forUnixSeconds: Int64(Date().timeIntervalSince1970))
-        let rows = (try? store.totalsBySource(localDates: [today])) ?? []
+        let dates = LocalDateProvider().recentLocalDates(count: DashboardRange.month.dayCount)
+        let rows = (try? store.totalsBySource(localDates: dates)) ?? []
         return rows.contains { $0.keystrokes > 0 }
     }
 
@@ -227,11 +238,17 @@ struct DashboardView: View {
         next.bySource = (try? store.totalsBySource(localDates: dates)) ?? []
         next.total = next.bySource.reduce(0) { $0 + $1.keystrokes }
 
+        // The hourly split drives the Peak hour card in every range; for the
+        // multi-day ranges it is the sum of the same local hour across the
+        // range's days (only Today charts it).
+        next.hourly = (range == .today
+                       ? (try? store.hourlyTotals(forLocalDate: today))
+                       : (try? store.hourlyTotals(localDates: dates))) ?? next.hourly
+        if let maxCount = next.hourly.max(), maxCount > 0 {
+            next.peakHour = next.hourly.firstIndex(of: maxCount)
+        }
+
         if range == .today {
-            next.hourly = (try? store.hourlyTotals(forLocalDate: today)) ?? next.hourly
-            if let maxCount = next.hourly.max(), maxCount > 0 {
-                next.peakHour = next.hourly.firstIndex(of: maxCount)
-            }
             // Trend + comparison need recent history regardless of range.
             // The comparison window is the 7 days ending YESTERDAY, so fetch
             // 8 dates (7 prior days + today) and split.
@@ -361,14 +378,23 @@ struct DashboardSections: View {
                     detail: CountFormatter.compact(top.keystrokes) + " keystrokes"
                 )
             }
-            if range == .today || isDayView, let peak = stats.peakHour {
+            if let peak = stats.peakHour, stats.hourly.indices.contains(peak) {
                 StatCard(
                     title: "Peak hour",
                     value: hourLabel(peak),
-                    detail: CountFormatter.compact(stats.hourly[peak]) + " keystrokes"
+                    detail: peakDetail(peak)
                 )
             }
         }
+    }
+
+    /// A single day's peak hour is a count; a range's peak hour is only
+    /// meaningful per day, or it reads as one enormous hour.
+    private func peakDetail(_ peak: Int) -> String {
+        if isDayView || range == .today {
+            return CountFormatter.compact(stats.hourly[peak]) + " keystrokes"
+        }
+        return "avg " + CountFormatter.compact(stats.hourly[peak] / max(range.dayCount, 1)) + " / day"
     }
 
     private var totalCardTitle: String {
@@ -470,7 +496,9 @@ struct DashboardSections: View {
                 }
             }
             .chartXAxis {
-                AxisMarks { value in
+                // Labeling every day makes the 30-day chart's dates overlap
+                // at narrow widths; the bars themselves are unaffected.
+                AxisMarks(values: ChartAxisLabels.evenlySpaced(stats.daily.map { $0.date })) { value in
                     AxisValueLabel {
                         if let date = value.as(String.self) { Text(shortDateLabel(date)) }
                     }

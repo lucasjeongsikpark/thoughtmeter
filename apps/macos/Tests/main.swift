@@ -21,6 +21,7 @@ let exitCode = runSuites([
     ("AppSettings", settingsTests),
     ("CountFormatter", formatterTests),
     ("LocalDate", localDateTests),
+    ("ChartAxisLabels", chartAxisTests),
 ])
 
 exit(exitCode)

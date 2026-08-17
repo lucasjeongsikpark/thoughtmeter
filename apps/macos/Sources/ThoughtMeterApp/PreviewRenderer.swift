@@ -68,7 +68,7 @@ enum PreviewRenderer {
             name: "dashboard-day.png", in: directory
         )
         let renderedCard = render(
-            ShareCardView(stats: stats, includeSources: true),
+            ShareCardView(stats: stats, range: .today, includeSources: true),
             name: "proof-of-thought.png", in: directory
         )
         guard renderedToday && renderedWeek && renderedDay
