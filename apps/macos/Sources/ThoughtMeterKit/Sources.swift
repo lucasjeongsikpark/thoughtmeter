@@ -63,15 +63,24 @@ public enum RecognizedCatalog {
     public static let apps: [App] = [
         // AI chat / assistant apps
         App(displayName: "ChatGPT", bundleID: "com.openai.chat"),
+        // Current ChatGPT desktop builds ship under the Codex bundle ID —
+        // observed on a real install (CFBundleName "ChatGPT").
+        App(displayName: "ChatGPT (Codex)", bundleID: "com.openai.codex"),
         App(displayName: "Claude", bundleID: "com.anthropic.claudefordesktop"),
         App(displayName: "Perplexity", bundleID: "ai.perplexity.mac"),
         App(displayName: "Microsoft Copilot", bundleID: "com.microsoft.Copilot"),
         App(displayName: "Grok", bundleID: "ai.x.grok"),
         App(displayName: "Raycast", bundleID: "com.raycast.macos"),
+        App(displayName: "ChatWise", bundleID: "app.chatwise"),
+        App(displayName: "BoltAI", bundleID: "co.podzim.BoltGPT"),
+        App(displayName: "Cherry Studio", bundleID: "com.kangfenmao.CherryStudio"),
+        App(displayName: "Poe", bundleID: "com.quora.poe.electron"),
         // Local model runners
         App(displayName: "LM Studio", bundleID: "ai.elementlabs.lmstudio"),
         App(displayName: "Ollama", bundleID: "com.electron.ollama"),
         App(displayName: "Jan", bundleID: "jan.ai.app"),
+        App(displayName: "GPT4All", bundleID: "com.nomic-ai.gpt4all"),
+        App(displayName: "Msty", bundleID: "app.msty.app"),
         // AI-assisted editors / IDEs
         App(displayName: "Visual Studio Code", bundleID: "com.microsoft.VSCode"),
         App(displayName: "VS Code Insiders", bundleID: "com.microsoft.VSCodeInsiders"),
@@ -82,12 +91,30 @@ public enum RecognizedCatalog {
         App(displayName: "Zed Preview", bundleID: "dev.zed.Zed-Preview"),
         App(displayName: "Trae", bundleID: "com.trae.app"),
         App(displayName: "Orca", bundleID: "com.stablyai.orca"),
+        App(displayName: "Antigravity", bundleID: "com.google.antigravity"),
+        App(displayName: "Kiro", bundleID: "dev.kiro.desktop"),
+        App(displayName: "Positron", bundleID: "com.rstudio.positron"),
         App(displayName: "Xcode", bundleID: "com.apple.dt.Xcode"),
+        App(displayName: "Android Studio", bundleID: "com.google.android.studio"),
         App(displayName: "IntelliJ IDEA", bundleID: "com.jetbrains.intellij"),
         App(displayName: "IntelliJ IDEA CE", bundleID: "com.jetbrains.intellij.ce"),
         App(displayName: "PyCharm", bundleID: "com.jetbrains.pycharm"),
         App(displayName: "PyCharm CE", bundleID: "com.jetbrains.pycharm.ce"),
         App(displayName: "WebStorm", bundleID: "com.jetbrains.WebStorm"),
+        App(displayName: "GoLand", bundleID: "com.jetbrains.goland"),
+        App(displayName: "CLion", bundleID: "com.jetbrains.CLion"),
+        App(displayName: "PhpStorm", bundleID: "com.jetbrains.PhpStorm"),
+        App(displayName: "RubyMine", bundleID: "com.jetbrains.rubymine"),
+        App(displayName: "Rider", bundleID: "com.jetbrains.rider"),
+        App(displayName: "DataGrip", bundleID: "com.jetbrains.datagrip"),
+        App(displayName: "RustRover", bundleID: "com.jetbrains.rustrover"),
+        App(displayName: "Sublime Text", bundleID: "com.sublimetext.4"),
+        App(displayName: "Nova", bundleID: "com.panic.Nova"),
+        App(displayName: "MacVim", bundleID: "org.vim.MacVim"),
+        App(displayName: "Emacs", bundleID: "org.gnu.Emacs"),
+        // AI-augmented workspaces / notes
+        App(displayName: "Notion", bundleID: "notion.id"),
+        App(displayName: "Obsidian", bundleID: "md.obsidian"),
         // Terminals (Claude Code, Codex CLI, and other terminal AI workflows)
         App(displayName: "Terminal", bundleID: "com.apple.Terminal"),
         App(displayName: "iTerm2", bundleID: "com.googlecode.iterm2"),
@@ -96,6 +123,13 @@ public enum RecognizedCatalog {
         App(displayName: "Alacritty", bundleID: "org.alacritty"),
         App(displayName: "kitty", bundleID: "net.kovidgoyal.kitty"),
         App(displayName: "WezTerm", bundleID: "com.github.wez.wezterm"),
+        App(displayName: "Tabby", bundleID: "org.tabby"),
+        App(displayName: "Hyper", bundleID: "co.zeit.hyper"),
+        // Deliberately absent: AI browsers (ChatGPT Atlas com.openai.atlas,
+        // Perplexity Comet, Dia, Arc, …). Like Chrome, adding one as an app
+        // would count typing on every website it shows — per-domain tracking
+        // through a browser extension is the only honest way to count those,
+        // and the extension currently exists for Chrome alone.
     ]
 
     /// Recognized AI domains for Chrome tracking. All entries must pass
@@ -114,14 +148,25 @@ public enum RecognizedCatalog {
         ("Poe", "poe.com"),
         ("Character.AI", "character.ai"),
         ("Meta AI", "meta.ai"),
+        // Meta's agent product, separate from Meta AI (own domain since launch).
+        ("Meta Muse", "muse.ai"),
+        ("Duck.ai", "duck.ai"),
+        ("Pi", "pi.ai"),
+        // lmarena.ai redirects here.
+        ("Arena (LMArena)", "arena.ai"),
+        ("Phind", "phind.com"),
         ("Qwen Chat", "chat.qwen.ai"),
         ("Kimi", "kimi.com"),
+        ("ChatGLM", "chatglm.cn"),
+        ("Hailuo AI (MiniMax)", "hailuoai.com"),
         ("Wrtn", "wrtn.ai"),
         ("CLOVA X", "clova-x.naver.com"),
         ("v0", "v0.dev"),
         ("Lovable", "lovable.dev"),
         ("Bolt", "bolt.new"),
         ("Replit", "replit.com"),
+        ("Jules", "jules.google.com"),
+        ("Devin", "app.devin.ai"),
         ("Midjourney", "midjourney.com"),
         ("Manus", "manus.im"),
         ("Genspark", "genspark.ai"),

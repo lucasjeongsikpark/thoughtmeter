@@ -5,6 +5,20 @@ Format: [Keep a Changelog](https://keepachangelog.com); versions follow SemVer.
 
 ## [Unreleased]
 
+### Added
+- 26 more recognized applications: ChatGPT's Codex-bundle builds, ChatWise,
+  BoltAI, Cherry Studio, Poe, GPT4All, Msty, Antigravity, Kiro, Positron,
+  Android Studio, GoLand, CLion, PhpStorm, RubyMine, Rider, DataGrip,
+  RustRover, Sublime Text, Nova, MacVim, Emacs, Notion, Obsidian, Tabby, and
+  Hyper. As always, only apps actually installed on the Mac are shown, and
+  nothing is tracked until selected. AI browsers (ChatGPT Atlas, Comet, Dia)
+  stay excluded on purpose — like Chrome, they would count typing on every
+  website.
+- 9 more recognized Chrome domains: Meta Muse (muse.ai), Duck.ai, Pi,
+  Arena (LMArena), Phind, ChatGLM, Hailuo AI, Jules, and Devin.
+  Meta's Muse and Meta AI Mac apps are not yet recognized as apps —
+  their bundle IDs will be added once observed on a real install.
+
 ## [0.3.2] — 2026-08-16
 
 ### Removed
